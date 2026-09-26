@@ -56,6 +56,95 @@ async function initEditor(user) {
 
     escaletaUI = new EscaletaUI('escaletaList', currentProgram, onEscaletaUpdate);
 
+
+    // Lógica de grabación de Podcast
+    let mediaRecorder;
+    let recordedChunks = [];
+    let streamRef;
+
+    document.getElementById('btnRecordPodcast').addEventListener('click', async (e) => {
+        const btn = e.currentTarget;
+        
+        if (mediaRecorder && mediaRecorder.state === 'recording') {
+            // Parar grabación
+            mediaRecorder.stop();
+            btn.innerHTML = '<i class="fa-solid fa-circle-dot"></i> Grabar Podcast';
+            btn.classList.remove('live-active'); // Quitamos parpadeo si lo pusimos
+            return;
+        }
+
+        try {
+            await Swal.fire({
+                title: 'Instrucciones de Grabación',
+                text: 'En la siguiente ventana, elige "Pestaña de Chrome / Esta pestaña", asegúrate de activar "Compartir audio de la pestaña" y dale a Compartir.',
+                icon: 'info',
+                confirmButtonText: 'Entendido'
+            });
+
+            const stream = await navigator.mediaDevices.getDisplayMedia({
+                video: { displaySurface: "browser" },
+                preferCurrentTab: true,
+                audio: {
+                    echoCancellation: false,
+                    noiseSuppression: false,
+                    sampleRate: 44100
+                }
+            });
+
+            // Extraemos solo el audio
+            const audioTracks = stream.getAudioTracks();
+            if (audioTracks.length === 0) {
+                stream.getTracks().forEach(t => t.stop());
+                Swal.fire("Sin audio", "No has activado la casilla de 'Compartir audio de la pestaña'. Inténtalo de nuevo.", "error");
+                return;
+            }
+
+            const audioStream = new MediaStream(audioTracks);
+            streamRef = stream;
+
+            mediaRecorder = new MediaRecorder(audioStream, { mimeType: 'audio/webm' });
+            
+            mediaRecorder.ondataavailable = (event) => {
+                if (event.data.size > 0) {
+                    recordedChunks.push(event.data);
+                }
+            };
+            
+            mediaRecorder.onstop = () => {
+                const blob = new Blob(recordedChunks, { type: 'audio/webm' });
+                const url = URL.createObjectURL(blob);
+                const a = document.createElement('a');
+                a.style.display = 'none';
+                a.href = url;
+                a.download = (currentProgram.title || "Podcast") + ".webm";
+                document.body.appendChild(a);
+                a.click();
+                setTimeout(() => {
+                    document.body.removeChild(a);
+                    window.URL.revokeObjectURL(url);
+                }, 100);
+                recordedChunks = [];
+                if (streamRef) {
+                    streamRef.getTracks().forEach(t => t.stop());
+                }
+                
+                Swal.fire({
+                    title: '¡Podcast Guardado!',
+                    text: 'Se ha descargado el archivo .webm de tu podcast. Puedes reproducirlo en cualquier navegador o convertirlo a MP3 con un conversor online.',
+                    icon: 'success'
+                });
+            };
+
+            mediaRecorder.start();
+            btn.innerHTML = '<i class="fa-solid fa-stop"></i> Parar Grabación';
+            btn.classList.add('live-active'); // Usa el parpadeo de live-active
+            
+        } catch (err) {
+            console.error(err);
+            Swal.fire("Grabación cancelada", "No se pudo iniciar la captura de audio.", "warning");
+        }
+    });
+
     // Controles de Vistas
     const btnViewList = document.getElementById('btnViewList');
     const btnViewGantt = document.getElementById('btnViewGantt');
@@ -133,6 +222,39 @@ async function initEditor(user) {
         downloadPDF('escaletaList', `${currentProgram.title}.pdf`);
     });
 
+
+    // Configuración de Voces TTS
+    let availableVoices = [];
+    const voiceSelect = document.getElementById('voiceSelect');
+    
+    function populateVoiceList() {
+        if (typeof speechSynthesis === 'undefined') return;
+        availableVoices = speechSynthesis.getVoices().filter(v => v.lang.startsWith('es') || v.name.toLowerCase().includes('español') || v.name.toLowerCase().includes('spanish'));
+        
+        if (availableVoices.length > 0) {
+            voiceSelect.style.display = 'inline-block';
+            voiceSelect.innerHTML = '';
+            availableVoices.forEach((voice, index) => {
+                const option = document.createElement('option');
+                option.textContent = voice.name;
+                option.value = index;
+                voiceSelect.appendChild(option);
+            });
+        }
+    }
+    
+    if (typeof speechSynthesis !== 'undefined' && speechSynthesis.onvoiceschanged !== undefined) {
+        speechSynthesis.onvoiceschanged = populateVoiceList;
+    }
+    setTimeout(populateVoiceList, 500); // Fallback
+    
+    window.getSelectedVoice = function() {
+        if (availableVoices.length > 0 && voiceSelect.value !== "") {
+            return availableVoices[voiceSelect.value];
+        }
+        return null;
+    };
+
     // Modo Directo y Cronómetro
     let timerInterval;
     let timerSeconds = 0;
@@ -143,16 +265,20 @@ async function initEditor(user) {
     document.getElementById('btnLiveMode').addEventListener('click', (e) => {
         const isLive = document.body.classList.toggle('live-mode');
         const btn = e.currentTarget;
+        const btnRecord = document.getElementById('btnRecordPodcast');
+        
         if (isLive) {
             btn.innerHTML = '<i class="fa-solid fa-pen"></i> Modo Edición';
             btn.style.backgroundColor = '#607d8b';
             escaletaUI.setSortable(false);
             liveTimer.classList.remove('hidden');
+            btnRecord.style.display = 'inline-block';
         } else {
             btn.innerHTML = '<i class="fa-solid fa-tower-broadcast"></i> Modo Directo';
             btn.style.backgroundColor = '#ff9800';
             escaletaUI.setSortable(true);
             liveTimer.classList.add('hidden');
+            btnRecord.style.display = 'none';
         }
     });
 

@@ -277,9 +277,46 @@ export class EscaletaUI {
             const actions = document.createElement('div');
             actions.className = 'block-actions';
             
+            if (block.type === 'text') {
+                const btnSpeak = document.createElement('button');
+                btnSpeak.innerHTML = '<i class="fa-solid fa-volume-high"></i>';
+                btnSpeak.title = "Leer texto en voz alta";
+                btnSpeak.className = 'btn-speak';
+                btnSpeak.style.marginRight = '5px';
+                btnSpeak.addEventListener('click', () => {
+                    if (window.speechSynthesis.speaking) {
+                        window.speechSynthesis.cancel();
+                        btnSpeak.innerHTML = '<i class="fa-solid fa-volume-high"></i>';
+                    } else if (input.value.trim() !== '') {
+                        const utterance = new SpeechSynthesisUtterance(input.value);
+                        utterance.lang = 'es-ES'; // Castellano
+                        if (typeof window.getSelectedVoice === 'function') {
+                            const selectedVoice = window.getSelectedVoice();
+                            if (selectedVoice) {
+                                utterance.voice = selectedVoice;
+                            }
+                        }
+                        
+                        utterance.onstart = () => {
+                            btnSpeak.innerHTML = '<i class="fa-solid fa-stop"></i>';
+                        };
+                        utterance.onend = () => {
+                            btnSpeak.innerHTML = '<i class="fa-solid fa-volume-high"></i>';
+                        };
+                        utterance.onerror = () => {
+                            btnSpeak.innerHTML = '<i class="fa-solid fa-volume-high"></i>';
+                        };
+                        
+                        window.speechSynthesis.speak(utterance);
+                    }
+                });
+                actions.appendChild(btnSpeak);
+            }
+            
             const btnDelete = document.createElement('button');
             btnDelete.innerHTML = '<i class="fa-solid fa-trash"></i>';
             btnDelete.title = "Eliminar bloque";
+            btnDelete.className = 'btn-delete';
             btnDelete.addEventListener('click', () => this.removeBlock(block.id));
             
             actions.appendChild(btnDelete);

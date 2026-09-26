@@ -266,7 +266,7 @@ body.live-mode .editor-layout {
   grid-template-columns: 1fr;
 }
 
-body.live-mode .block-actions {
+body.live-mode .block-actions .btn-delete {
   display: none;
 }
 

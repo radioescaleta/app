@@ -76,12 +76,66 @@ document.addEventListener('DOMContentLoaded', () => {
             card.innerHTML = `
                 <h3>${program.title} ${badge}</h3>
                 <p><small>Creado: ${date}</small></p>
-                <div class="program-actions">
-                    <a href="editor.html?id=${program.id}" class="btn btn-primary" style="flex:1;">Editar</a>
-                    ${isOwner ? `<button class="btn btn-secondary btn-delete" data-id="${program.id}" style="background-color: #f44336;"><i class="fa-solid fa-trash"></i></button>` : ''}
+                <div class="program-actions" style="display: flex; gap: 8px;">
+                    <a href="editor.html?id=${program.id}" class="btn btn-primary" style="flex:1;"><i class="fa-solid fa-pen"></i> Editar</a>
+                    <button class="btn btn-secondary btn-clone" data-id="${program.id}" style="background-color: #2196F3;" title="Clonar programa (como plantilla)"><i class="fa-solid fa-copy"></i></button>
+                    ${isOwner ? `<button class="btn btn-secondary btn-delete" data-id="${program.id}" style="background-color: #f44336;" title="Borrar"><i class="fa-solid fa-trash"></i></button>` : ''}
                 </div>
             `;
             programsList.appendChild(card);
+        });
+
+        
+        // Eventos para botones de clonar
+        document.querySelectorAll('.btn-clone').forEach(btn => {
+            btn.addEventListener('click', async (e) => {
+                const btnEl = e.currentTarget;
+                const programId = btnEl.dataset.id;
+                
+                const result = await Swal.fire({
+                    title: '¿Clonar programa?',
+                    text: "Se creará una copia exacta de esta escaleta para que la uses de plantilla.",
+                    icon: 'question',
+                    showCancelButton: true,
+                    confirmButtonText: 'Sí, clonar',
+                    cancelButtonText: 'Cancelar'
+                });
+                
+                if (result.isConfirmed) {
+                    btnEl.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i>';
+                    btnEl.disabled = true;
+                    
+                    try {
+                        // 1. Obtener datos originales
+                        const data = await dbService.getProgramById(programId);
+                        
+                        // 2. Preparar copia
+                        delete data.id; // Para que Firebase cree uno nuevo
+                        data.title = data.title + " (Copia)";
+                        data.ownerId = userId; // El dueño de la copia es el usuario actual
+                        data.collaborators = {}; // No se copian los colaboradores
+                        data.createdAt = new Date().toISOString();
+                        
+                        // 3. Renovar IDs de los bloques para evitar colisiones internas
+                        if (data.blocks) {
+                            data.blocks.forEach(b => {
+                                b.id = 'block_' + Date.now() + Math.random().toString(36).substr(2, 9);
+                            });
+                        }
+                        
+                        // 4. Guardar
+                        await dbService.saveProgram(data);
+                        
+                        Swal.fire({toast: true, position: 'bottom', icon: 'success', title: '¡Programa clonado!', showConfirmButton: false, timer: 3000});
+                        loadPrograms(userId);
+                    } catch (err) {
+                        console.error(err);
+                        Swal.fire("Error", "No se pudo clonar: " + err.message, "error");
+                        btnEl.innerHTML = '<i class="fa-solid fa-copy"></i>';
+                        btnEl.disabled = false;
+                    }
+                }
+            });
         });
 
         // Eventos para botones de borrar
