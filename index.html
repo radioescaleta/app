@@ -1,0 +1,46 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Radioescaleta - Tus programas de radio escolares</title>
+    <link rel="stylesheet" href="./css/common.css">
+    <link rel="stylesheet" href="./css/index.css">
+    <!-- FontAwesome para iconos -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+</head>
+<body>
+    <header>
+        <div class="logo">
+            <i class="fa-solid fa-radio"></i> Radioescaleta
+        </div>
+        <div id="userProfile" class="hidden">
+            <span id="userName">Usuario</span>
+            <button id="btnLogout" class="btn btn-secondary">Cerrar Sesión</button>
+        </div>
+    </header>
+
+    <main class="container">
+        <section id="loginSection" class="hero">
+            <h1>Bienvenido a Radioescaleta</h1>
+            <p>Crea, organiza y lanza tus programas de radio de forma profesional.</p>
+            <br>
+            <button id="btnLogin" class="btn btn-primary"><i class="fa-brands fa-google"></i> Iniciar sesión con Google</button>
+        </section>
+
+        <section id="dashboardSection" class="hidden">
+            <div style="display: flex; justify-content: space-between; align-items: center;">
+                <h2>Mis Programas</h2>
+                <button id="btnNewProgram" class="btn btn-primary"><i class="fa-solid fa-plus"></i> Nueva Escaleta</button>
+            </div>
+            
+            <div class="programs-grid" id="programsList">
+                <!-- Los programas se cargarán aquí dinámicamente -->
+            </div>
+        </section>
+    </main>
+
+    <!-- Scripts (Módulos JS) -->
+    <script type="module" src="./js/index.js"></script>
+</body>
+</html>

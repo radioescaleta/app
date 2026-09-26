@@ -1,0 +1,258 @@
+.editor-layout {
+  display: grid;
+  grid-template-columns: 1fr 300px;
+  gap: 20px;
+  height: calc(100vh - 80px);
+  padding: 20px;
+}
+
+@media (max-width: 768px) {
+  .editor-layout {
+    grid-template-columns: 1fr;
+    height: auto;
+  }
+}
+
+/* Main Area */
+.main-area {
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+}
+
+/* Botonera */
+.botonera {
+  display: flex;
+  align-items: center;
+  gap: 15px;
+  padding: 10px;
+  background: white;
+  border-radius: 10px;
+  overflow-x: auto;
+  min-height: 80px;
+}
+
+.botonera h3 {
+  margin-right: 10px;
+}
+
+.audio-btn {
+  width: 50px;
+  height: 50px;
+  border-radius: 50%;
+  border: none;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-weight: bold;
+  color: white;
+  position: relative;
+}
+
+.audio-btn.primary { background-color: var(--primary-color); }
+.audio-btn.secondary { background-color: var(--secondary-color); }
+
+.audio-btn .shortcut-badge {
+  position: absolute;
+  top: -5px;
+  right: -5px;
+  background: #333;
+  color: white;
+  font-size: 10px;
+  border-radius: 50%;
+  width: 18px;
+  height: 18px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+/* Escaleta (Timeline) */
+.escaleta-container {
+  flex-grow: 1;
+  background-color: var(--bg-color);
+  border-radius: 10px;
+  padding: 20px;
+  overflow-y: auto;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  position: relative;
+}
+
+.escaleta-block {
+  padding: 15px;
+  border-radius: 25px;
+  color: #333;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  cursor: grab;
+  user-select: none;
+}
+
+.escaleta-block input[type="text"] {
+  background: transparent;
+  border: none;
+  font-size: 16px;
+  font-weight: bold;
+  color: inherit;
+  width: 100%;
+  outline: none;
+}
+
+.escaleta-block.text {
+  background-color: var(--block-text-bg);
+}
+
+.escaleta-block.audio-sintonia {
+  background-color: var(--block-audio-bg);
+  color: white;
+}
+
+.escaleta-block.audio-sintonia input[type="text"] {
+  color: white;
+}
+
+.escaleta-block.audio-cortinilla {
+  background-color: var(--block-audio-fx-bg);
+  color: white;
+}
+
+.escaleta-block.audio-cortinilla input[type="text"] {
+  color: white;
+}
+
+.block-actions button {
+  background: none;
+  border: none;
+  cursor: pointer;
+  color: inherit;
+  font-size: 16px;
+}
+
+.download-btn-container {
+  text-align: right;
+  margin-top: auto;
+  padding-top: 20px;
+}
+
+.download-btn-container button {
+  background: none;
+  border: none;
+  cursor: pointer;
+  font-size: 18px;
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  font-weight: bold;
+}
+
+/* Sidebar */
+.sidebar {
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+}
+
+.sidebar-section {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.add-block-btn {
+  background-color: #e1bee7;
+  color: #333;
+  padding: 15px;
+  border-radius: 25px;
+  border: none;
+  font-weight: bold;
+  cursor: pointer;
+  text-align: center;
+}
+
+.add-block-btn.audio {
+  background-color: #f8bbd0;
+}
+
+.audio-category {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  background-color: var(--secondary-color);
+  color: white;
+  padding: 10px 15px;
+  border-radius: 5px;
+  cursor: pointer;
+}
+
+.audio-category i {
+  font-size: 20px;
+}
+
+.upload-btn {
+  background-color: #e1bee7;
+  color: #333;
+  padding: 20px;
+  border-radius: 25px;
+  border: none;
+  font-weight: bold;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  font-size: 18px;
+  margin-top: 20px;
+}
+
+/* Modal for library */
+.modal {
+  display: none; 
+  position: fixed; 
+  z-index: 1000; 
+  left: 0;
+  top: 0;
+  width: 100%; 
+  height: 100%; 
+  overflow: auto; 
+  background-color: rgba(0,0,0,0.5); 
+}
+
+.modal-content {
+  background-color: #fefefe;
+  margin: 10% auto; 
+  padding: 20px;
+  border: 1px solid #888;
+  width: 80%;
+  max-width: 600px;
+  border-radius: 10px;
+}
+
+.close-modal {
+  color: #aaa;
+  float: right;
+  font-size: 28px;
+  font-weight: bold;
+  cursor: pointer;
+}
+
+.library-list {
+  list-style: none;
+  padding: 0;
+  margin-top: 20px;
+}
+
+.library-item {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 10px;
+  border-bottom: 1px solid #eee;
+}
+
+.library-item button {
+  padding: 5px 10px;
+}

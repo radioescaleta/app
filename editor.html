@@ -1,0 +1,97 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <!-- Google Identity Services -->
+    <script src="https://accounts.google.com/gsi/client" async defer></script>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Editor - Radioescaleta</title>
+    <link rel="stylesheet" href="./css/common.css">
+    <link rel="stylesheet" href="./css/editor.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    
+    <!-- Librerías Externas -->
+    <!-- SortableJS para Drag and Drop -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/Sortable/1.15.0/Sortable.min.js"></script>
+    <!-- html2pdf para descargar PDF -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
+</head>
+<body>
+    <header>
+        <div class="logo">
+            <a href="index.html" style="color: inherit; text-decoration: none;">
+                <i class="fa-solid fa-arrow-left"></i> <i class="fa-solid fa-radio"></i> Radioescaleta
+            </a>
+        </div>
+        <div>
+            <input type="text" id="programTitle" value="Mi Programa de Radio" style="font-size: 18px; border: none; font-weight: bold; outline: none; text-align: center; width: 300px;">
+        </div>
+        <div id="userProfile">
+            <button id="btnSave" class="btn btn-secondary"><i class="fa-solid fa-save"></i> Guardar</button>
+        </div>
+    </header>
+
+    <div class="editor-layout">
+        <!-- Main Area (Botonera + Escaleta) -->
+        <div class="main-area">
+            <!-- Botonera -->
+            <div class="botonera" id="audioBoard">
+                <h3>Botonera de audios</h3>
+                <!-- Los botones de audio se generarán aquí -->
+            </div>
+
+            <!-- Escaleta -->
+            <div class="escaleta-container" id="escaletaContainer">
+                <div id="escaletaList">
+                    <!-- Los bloques irán aquí -->
+                </div>
+                
+                <div class="download-btn-container">
+                    <button id="btnDownloadPdf"><i class="fa-solid fa-download"></i> Descargar escaleta</button>
+                </div>
+            </div>
+        </div>
+
+        <!-- Sidebar -->
+        <div class="sidebar">
+            <div class="sidebar-section">
+                <button class="add-block-btn" id="btnAddText">Bloque texto</button>
+                <button class="add-block-btn audio" id="btnAddAudio">Bloque audio</button>
+            </div>
+            
+            <div class="sidebar-section" style="margin-top: 30px;">
+                <div class="audio-category" data-category="sintonias">
+                    <i class="fa-solid fa-arrow-down"></i> Sintonías
+                </div>
+                <div class="audio-category" data-category="efectos">
+                    <i class="fa-solid fa-arrow-down"></i> Efectos
+                </div>
+                <div class="audio-category" data-category="musica">
+                    <i class="fa-solid fa-arrow-down"></i> Música de fondo
+                </div>
+            </div>
+
+            <button class="upload-btn" id="btnUploadDrive">
+                <i class="fa-solid fa-cloud-arrow-up"></i> Subir
+            </button>
+        </div>
+    </div>
+
+    <!-- Modal Librería de Sonidos -->
+    <div id="libraryModal" class="modal">
+        <div class="modal-content">
+            <span class="close-modal">&times;</span>
+            <h2 id="modalTitle">Seleccionar Audio</h2>
+            <ul class="library-list" id="libraryList">
+                <!-- Items cargados dinámicamente -->
+            </ul>
+        </div>
+    </div>
+
+    <!-- Elemento de audio global oculto para reproducir -->
+    <audio id="globalAudioPlayer" style="display:none;"></audio>
+
+    <!-- Scripts (Módulos JS) -->
+    <script type="module" src="./js/editor.js"></script>
+</body>
+</html>
