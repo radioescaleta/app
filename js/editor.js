@@ -168,6 +168,10 @@ async function initEditor(user) {
                 const m = String(Math.floor(timerSeconds / 60)).padStart(2, '0');
                 const s = String(timerSeconds % 60).padStart(2, '0');
                 timerDisplay.innerText = `${m}:${s}`;
+                
+                // Highlight live blocks
+                escaletaUI.highlightLiveBlocks(timerSeconds);
+                audioBoard.highlightLiveBlocks(timerSeconds);
             }, 1000);
         }
     });

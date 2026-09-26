@@ -463,3 +463,25 @@ body.live-mode .btn-title {
     font-weight: bold;
     color: #000;
 }
+
+/* Live Mode Highlight */
+.live-active {
+    box-shadow: 0 0 10px #ff9800, inset 0 0 10px rgba(255, 152, 0, 0.1) !important;
+    border: 2px solid #ff9800 !important;
+    background-color: rgba(255, 152, 0, 0.05);
+}
+.audio-btn.live-active {
+    animation: pulse-orange 2s infinite;
+}
+
+@keyframes pulse-orange {
+    0% {
+        box-shadow: 0 0 0 0 rgba(255, 152, 0, 0.7);
+    }
+    70% {
+        box-shadow: 0 0 0 10px rgba(255, 152, 0, 0);
+    }
+    100% {
+        box-shadow: 0 0 0 0 rgba(255, 152, 0, 0);
+    }
+}

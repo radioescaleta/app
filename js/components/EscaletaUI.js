@@ -50,6 +50,26 @@ export class EscaletaUI {
         this.notifyUpdate();
     }
 
+    highlightLiveBlocks(currentSeconds) {
+        import('../utils/timeUtils.js').then(module => {
+            Array.from(this.container.children).forEach(el => {
+                const blockId = el.dataset.id;
+                const block = this.program.blocks.find(b => b.id === blockId);
+                if (block) {
+                    const startSec = module.timeToSeconds(block.startTime);
+                    const endSec = module.timeToSeconds(block.endTime || block.duration || block.startTime);
+                    
+                    // Si currentSeconds está dentro del rango
+                    if (currentSeconds >= startSec && currentSeconds < endSec) {
+                        el.classList.add('live-active');
+                    } else {
+                        el.classList.remove('live-active');
+                    }
+                }
+            });
+        });
+    }
+
     updateOrderFromDOM() {
         const orderIds = Array.from(this.container.children).map(el => el.dataset.id);
         this.program.updateBlockOrder(orderIds);

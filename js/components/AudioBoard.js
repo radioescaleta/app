@@ -71,6 +71,23 @@ export class AudioBoard {
         this.container.appendChild(wrapperDiv);
     }
 
+    highlightLiveBlocks(currentSeconds) {
+        import('../utils/timeUtils.js').then(module => {
+            this.audioBlocks.forEach(block => {
+                const btn = document.getElementById(`btn-audio-${block.id}`);
+                if (btn) {
+                    const startSec = module.timeToSeconds(block.startTime);
+                    const endSec = module.timeToSeconds(block.endTime || block.duration || block.startTime);
+                    if (currentSeconds >= startSec && currentSeconds < endSec) {
+                        btn.classList.add('live-active');
+                    } else {
+                        btn.classList.remove('live-active');
+                    }
+                }
+            });
+        });
+    }
+
     toggleAudio(url, btnElement) {
         if (!url) return;
 
