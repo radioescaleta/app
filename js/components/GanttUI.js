@@ -30,7 +30,7 @@ export class GanttUI {
             const durSec = endSec - startSec;
             if (endSec > maxTime) maxTime = endSec;
 
-            if (b.type === 'audio' && b.category === 'musica') {
+            if (b.isBackground || (b.type === 'audio' && b.category === 'musica')) {
                 bgTrack.push({ ...b, startSec, durSec });
             } else {
                 mainTrack.push({ ...b, startSec, durSec });

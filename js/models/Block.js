@@ -22,6 +22,7 @@ export class AudioBlock extends Block {
         this.title = title;
         this.audioUrl = audioUrl;
         this.maxDuration = maxDuration;
+        this.isBackground = false;
         this.keyboardKey = keyboardKey;
     }
 }

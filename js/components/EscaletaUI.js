@@ -157,11 +157,24 @@ export class EscaletaUI {
             timeContainer.appendChild(endInput);
             timeContainer.appendChild(durationSpan);
 
-            const input = document.createElement('input');
-            input.type = 'text';
+            const contentContainer = document.createElement('div');
+            contentContainer.style.flex = '1';
+            contentContainer.style.display = 'flex';
+            contentContainer.style.flexDirection = 'column';
+            contentContainer.style.gap = '5px';
+
+            const input = document.createElement(block.type === 'text' ? 'textarea' : 'input');
+            input.className = 'block-content';
+            if (block.type === 'text') {
+                input.style.resize = 'vertical';
+                input.style.minHeight = '30px';
+                input.style.fontFamily = 'inherit';
+                input.style.padding = '5px';
+            } else {
+                input.type = 'text';
+            }
             
-            // Mostrar [Atajo] en el input si es audio
-            let prefix = '';
+            let prefix = "";
             if (block.type === 'audio') {
                 const audioIndex = this.program.blocks.filter(b => b.type === 'audio').findIndex(b => b.id === block.id);
                 if (audioIndex >= 0 && audioIndex < 9) {
@@ -177,10 +190,69 @@ export class EscaletaUI {
                     val = val.substring(prefix.length);
                 }
                 
-                if (block.type === 'text') block.content = val;
-                else block.title = val;
+                if (block.type === 'text') {
+                    block.content = val;
+                } else {
+                    block.title = val;
+                }
                 this.notifyUpdate();
             });
+
+            contentContainer.appendChild(input);
+
+            if (block.type === 'text') {
+                const helper = document.createElement('small');
+                helper.style.color = '#888';
+                helper.style.fontSize = '11px';
+                
+                const updateHelper = () => {
+                    const words = input.value.trim().split(/\s+/).filter(w => w.length > 0).length;
+                    const sec = Math.round((words / 130) * 60);
+                    import('../utils/timeUtils.js').then(module => {
+                        helper.innerText = `Lectura est.: ${module.secondsToTime(sec)} (${words} palabras)`;
+                    });
+                };
+                
+                input.addEventListener('input', updateHelper);
+                input.addEventListener('blur', () => {
+                    const words = input.value.trim().split(/\s+/).filter(w => w.length > 0).length;
+                    if (words > 0) {
+                        const sec = Math.round((words / 130) * 60);
+                        import('../utils/timeUtils.js').then(module => {
+                            const startSec = module.timeToSeconds(block.startTime);
+                            block.endTime = module.secondsToTime(startSec + sec);
+                            endInput.value = block.endTime;
+                            endInput.style.borderColor = '#4caf50';
+                            updateDurationDisplay();
+                            this.notifyUpdate();
+                        });
+                    }
+                });
+                
+                updateHelper();
+                contentContainer.appendChild(helper);
+            }
+
+            if (block.type === 'audio') {
+                const bgLabel = document.createElement('label');
+                bgLabel.style.fontSize = '12px';
+                bgLabel.style.color = '#555';
+                bgLabel.style.display = 'flex';
+                bgLabel.style.alignItems = 'center';
+                bgLabel.style.gap = '5px';
+                
+                const bgCheck = document.createElement('input');
+                bgCheck.type = 'checkbox';
+                bgCheck.checked = !!block.isBackground || block.category === 'musica';
+                bgCheck.addEventListener('change', (e) => {
+                    block.isBackground = e.target.checked;
+                    this.notifyUpdate();
+                });
+                
+                bgLabel.appendChild(bgCheck);
+                bgLabel.appendChild(document.createTextNode('Suena de fondo (marcador de timeline)'));
+                contentContainer.appendChild(bgLabel);
+            }
 
             const actions = document.createElement('div');
             actions.className = 'block-actions';
@@ -193,7 +265,7 @@ export class EscaletaUI {
             actions.appendChild(btnDelete);
 
             el.appendChild(timeContainer);
-            el.appendChild(input);
+            el.appendChild(contentContainer);
             el.appendChild(actions);
 
             this.container.appendChild(el);

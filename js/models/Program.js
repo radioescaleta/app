@@ -55,6 +55,7 @@ export class Program {
             if (block) {
                 block.startTime = bData.startTime || "00:00";
                 block.endTime = bData.endTime || bData.duration || "00:00";
+                if (block.type === 'audio') block.isBackground = !!bData.isBackground;
             }
             return block;
         });
