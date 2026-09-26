@@ -75,15 +75,23 @@ async function initEditor(user) {
 
         try {
             await Swal.fire({
-                title: 'Instrucciones de Grabación',
-                text: 'En la siguiente ventana, elige "Pestaña de Chrome / Esta pestaña", asegúrate de activar "Compartir audio de la pestaña" y dale a Compartir.',
-                icon: 'info',
-                confirmButtonText: 'Entendido'
+                title: '🎙️ Modo de Grabación',
+                html: `
+                    <p style="text-align: left;">Para que la grabación capture tanto las <b>sintonías</b> como las <b>voces de texto</b> (las voces operan fuera del navegador):</p>
+                    <ol style="text-align: left;">
+                        <li>En la ventana que aparecerá, selecciona la pestaña superior <b>"Toda la pantalla"</b>.</li>
+                        <li>Haz clic en la imagen de tu pantalla.</li>
+                        <li>Marca abajo el interruptor <b>"Compartir audio del sistema"</b>.</li>
+                    </ol>
+                    <p style="text-align: left; color: #d32f2f; font-size: 0.9em;"><b>Aviso:</b> Si eliges "Pestaña de Chrome", las voces robóticas no se grabarán, solo la música.</p>
+                `,
+                icon: 'warning',
+                confirmButtonText: 'Entendido, ¡a grabar!'
             });
 
             const stream = await navigator.mediaDevices.getDisplayMedia({
                 video: { displaySurface: "browser" },
-                preferCurrentTab: true,
+                
                 audio: {
                     echoCancellation: false,
                     noiseSuppression: false,
