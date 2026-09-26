@@ -46,11 +46,17 @@ export class Program {
         p.createdAt = data.createdAt || new Date().toISOString();
         
         p.blocks = (data.blocks || []).map(bData => {
+            let block;
             if (bData.type === 'text') {
-                return new TextBlock(bData.content, bData.id);
+                block = new TextBlock(bData.content, bData.id);
             } else if (bData.type === 'audio') {
-                return new AudioBlock(bData.category, bData.title, bData.audioUrl, bData.keyboardKey, bData.id);
+                block = new AudioBlock(bData.category, bData.title, bData.audioUrl ? bData.audioUrl.replace(".ogg", ".mp3") : "", bData.keyboardKey, bData.id, bData.maxDuration || 0);
             }
+            if (block) {
+                block.startTime = bData.startTime || "00:00";
+                block.endTime = bData.endTime || bData.duration || "00:00";
+            }
+            return block;
         });
         return p;
     }

@@ -5,6 +5,7 @@ import { driveService } from './services/driveService.js';
 import { Program } from './models/Program.js';
 import { EscaletaUI } from './components/EscaletaUI.js';
 import { AudioBoard } from './components/AudioBoard.js';
+import { GanttUI } from './components/GanttUI.js';
 import { downloadPDF } from './utils/pdfGenerator.js';
 
 let currentProgram = new Program();
@@ -14,15 +15,15 @@ let audioBoard = null;
 // Librería estática por defecto (rutas relativas)
 const defaultLibrary = {
     sintonias: [
-        { title: "Sintonía Noticias", url: "./assets/sounds/sintonia1.ogg" },
-        { title: "Sintonía Magacín", url: "./assets/sounds/sintonia2.ogg" }
+        { title: "Sintonía Noticias", url: "./assets/sounds/sintonia1.mp3" },
+        { title: "Sintonía Magacín", url: "./assets/sounds/sintonia2.mp3" }
     ],
     efectos: [
-        { title: "Aplausos", url: "./assets/sounds/aplausos.ogg" },
-        { title: "Risa", url: "./assets/sounds/risa.ogg" }
+        { title: "Aplausos", url: "./assets/sounds/aplausos.mp3" },
+        { title: "Risa", url: "./assets/sounds/risa.mp3" }
     ],
     musica: [
-        { title: "Fondo Tranquilo", url: "./assets/sounds/fondo1.ogg" }
+        { title: "Fondo Tranquilo", url: "./assets/sounds/fondo1.mp3" }
     ]
 };
 
@@ -33,6 +34,7 @@ document.addEventListener('DOMContentLoaded', async () => {
             window.location.href = 'index.html';
             return;
         }
+        await dbService.saveUser(user);
         await initEditor(user);
     });
 });
@@ -41,14 +43,35 @@ async function initEditor(user) {
     driveService.init();
 
     // 2. Inicializar Componentes
-    audioBoard = new AudioBoard('audioBoard', 'globalAudioPlayer');
+    audioBoard = new AudioBoard('audioBoard');
+    const ganttUI = new GanttUI('ganttContainer');
     
-    // Callback cuando la escaleta cambia para actualizar la botonera
+    // Callback cuando la escaleta cambia para actualizar la botonera y el gantt (si está activo)
     const onEscaletaUpdate = () => {
         audioBoard.updateBoard(currentProgram.blocks);
+        if (document.body.classList.contains('gantt-active')) {
+            ganttUI.render(currentProgram);
+        }
     };
 
     escaletaUI = new EscaletaUI('escaletaList', currentProgram, onEscaletaUpdate);
+
+    // Controles de Vistas
+    const btnViewList = document.getElementById('btnViewList');
+    const btnViewGantt = document.getElementById('btnViewGantt');
+    
+    btnViewList.addEventListener('click', () => {
+        document.body.classList.remove('gantt-active');
+        btnViewList.style.background = 'var(--primary-color)';
+        btnViewGantt.style.background = '#9e9e9e';
+    });
+    
+    btnViewGantt.addEventListener('click', () => {
+        document.body.classList.add('gantt-active');
+        btnViewGantt.style.background = 'var(--primary-color)';
+        btnViewList.style.background = '#9e9e9e';
+        ganttUI.render(currentProgram);
+    });
 
     // 3. Cargar programa si hay ID en la URL
     const urlParams = new URLSearchParams(window.location.search);
@@ -69,25 +92,92 @@ async function initEditor(user) {
     onEscaletaUpdate();
 
     // 4. Configurar Event Listeners UI
-    document.getElementById('programTitle').addEventListener('change', (e) => {
+    const titleInput = document.getElementById('programTitle');
+    titleInput.addEventListener('input', (e) => {
         currentProgram.title = e.target.value;
     });
+    titleInput.addEventListener('keypress', (e) => {
+        if (e.key === 'Enter') {
+            titleInput.blur();
+        }
+    });
+
+    // Toast helper
+    function showToast(message) {
+        Swal.fire({
+            toast: true,
+            position: 'bottom',
+            icon: 'success',
+            title: message,
+            showConfirmButton: false,
+            timer: 3000,
+            timerProgressBar: true
+        });
+    }
 
     document.getElementById('btnSave').addEventListener('click', async () => {
         try {
             await dbService.saveProgram(currentProgram.toFirestore());
-            alert("Programa guardado correctamente");
+            showToast("Programa guardado correctamente");
             // Si era nuevo, añadir ID a la URL para no crear copias en futuros guardados
             if (!urlParams.has('id')) {
                 window.history.replaceState({}, '', `?id=${currentProgram.id}`);
             }
         } catch (e) {
-            alert("Error al guardar");
+            showToast("Error al guardar: " + e.message);
         }
     });
 
     document.getElementById('btnDownloadPdf').addEventListener('click', () => {
+        ganttUI.render(currentProgram); // Renderizar por si no se había abierto antes
         downloadPDF('escaletaList', `${currentProgram.title}.pdf`);
+    });
+
+    // Modo Directo y Cronómetro
+    let timerInterval;
+    let timerSeconds = 0;
+    const timerDisplay = document.getElementById('timerDisplay');
+    const btnTimerPlay = document.getElementById('btnTimerPlay');
+    const liveTimer = document.getElementById('liveTimer');
+
+    document.getElementById('btnLiveMode').addEventListener('click', (e) => {
+        const isLive = document.body.classList.toggle('live-mode');
+        const btn = e.currentTarget;
+        if (isLive) {
+            btn.innerHTML = '<i class="fa-solid fa-pen"></i> Modo Edición';
+            btn.style.backgroundColor = '#607d8b';
+            escaletaUI.setSortable(false);
+            liveTimer.classList.remove('hidden');
+        } else {
+            btn.innerHTML = '<i class="fa-solid fa-tower-broadcast"></i> Modo Directo';
+            btn.style.backgroundColor = '#ff9800';
+            escaletaUI.setSortable(true);
+            liveTimer.classList.add('hidden');
+        }
+    });
+
+    btnTimerPlay.addEventListener('click', () => {
+        if (timerInterval) {
+            clearInterval(timerInterval);
+            timerInterval = null;
+            btnTimerPlay.innerHTML = '<i class="fa-solid fa-play"></i>';
+        } else {
+            btnTimerPlay.innerHTML = '<i class="fa-solid fa-pause"></i>';
+            timerInterval = setInterval(() => {
+                timerSeconds++;
+                const m = String(Math.floor(timerSeconds / 60)).padStart(2, '0');
+                const s = String(timerSeconds % 60).padStart(2, '0');
+                timerDisplay.innerText = `${m}:${s}`;
+            }, 1000);
+        }
+    });
+
+    document.getElementById('btnTimerReset').addEventListener('click', () => {
+        clearInterval(timerInterval);
+        timerInterval = null;
+        timerSeconds = 0;
+        timerDisplay.innerText = "00:00";
+        btnTimerPlay.innerHTML = '<i class="fa-solid fa-play"></i>';
     });
 
     document.getElementById('btnAddText').addEventListener('click', () => {
@@ -96,11 +186,7 @@ async function initEditor(user) {
 
     document.getElementById('btnAddAudio').addEventListener('click', () => {
         openLibraryModal('sintonias', (selected) => {
-            escaletaUI.addBlock('audio', {
-                category: selected.category,
-                title: selected.title,
-                url: selected.url
-            });
+            window.addAudioWithTimeCalculation(selected.title, selected.url, selected.category);
         });
     });
 
@@ -108,11 +194,7 @@ async function initEditor(user) {
     document.querySelectorAll('.audio-category').forEach(el => {
         el.addEventListener('click', () => {
             openLibraryModal(el.dataset.category, (selected) => {
-                escaletaUI.addBlock('audio', {
-                    category: selected.category,
-                    title: selected.title,
-                    url: selected.url
-                });
+                window.addAudioWithTimeCalculation(selected.title, selected.url, selected.category);
             });
         });
     });
@@ -134,15 +216,11 @@ async function initEditor(user) {
                     const result = await driveService.uploadAudio(file);
                     
                     // Añadimos a la escaleta (como efecto por defecto, podría elegirse)
-                    escaletaUI.addBlock('audio', {
-                        category: 'efectos',
-                        title: file.name,
-                        url: result.url
-                    });
+                    window.addAudioWithTimeCalculation(file.name, result.url, 'efectos');
                     
                     btn.innerHTML = '<i class="fa-solid fa-cloud-arrow-up"></i> Subir';
                 } catch (err) {
-                    alert("Error subiendo el archivo: " + err);
+                    Swal.fire("Error", "Error subiendo el archivo: " + err, "error");
                     document.getElementById('btnUploadDrive').innerHTML = '<i class="fa-solid fa-cloud-arrow-up"></i> Subir';
                 }
             }
@@ -151,9 +229,60 @@ async function initEditor(user) {
     });
 }
 
-// Lógica del Modal
+// Lógica de Modales
 const modal = document.getElementById('libraryModal');
 const closeBtn = document.querySelector('.close-modal');
+
+// Lógica Modal Bibliotecas Externas
+const externalLibsModal = document.getElementById('externalLibsModal');
+const btnExternalLibs = document.getElementById('btnExternalLibs');
+const closeExternalLibs = document.getElementById('closeExternalLibs');
+
+if (btnExternalLibs) {
+    btnExternalLibs.onclick = () => externalLibsModal.style.display = "block";
+}
+if (closeExternalLibs) {
+    closeExternalLibs.onclick = () => externalLibsModal.style.display = "none";
+}
+
+// Lógica Modal Compartir
+const shareModal = document.getElementById('shareModal');
+const btnShare = document.getElementById('btnShare');
+const closeShareModal = document.getElementById('closeShareModal');
+const btnConfirmShare = document.getElementById('btnConfirmShare');
+
+if (btnShare) {
+    btnShare.onclick = () => shareModal.style.display = "block";
+}
+if (closeShareModal) {
+    closeShareModal.onclick = () => shareModal.style.display = "none";
+}
+
+if (btnConfirmShare) {
+    btnConfirmShare.onclick = async () => {
+        const email = document.getElementById('shareEmail').value.trim();
+        const role = document.getElementById('shareRole').value;
+        if (!email) return;
+
+        btnConfirmShare.innerText = "Buscando...";
+        const collaborator = await dbService.getUserByEmail(email);
+        
+        if (collaborator) {
+            currentProgram.collaborators[collaborator.uid] = role;
+            try {
+                await dbService.saveProgram(currentProgram.toFirestore());
+                Swal.fire("¡Compartido!", `Programa compartido con ${email} como ${role}`, "success");
+                shareModal.style.display = "none";
+            } catch (e) {
+                Swal.fire("Error", "Error al compartir: " + e.message, "error");
+            }
+        } else {
+            Swal.fire("Usuario no encontrado", `No se encontró ningún usuario con el correo ${email}. Debe iniciar sesión en Radioescaleta al menos una vez.`, "warning");
+        }
+        btnConfirmShare.innerText = "Invitar";
+        document.getElementById('shareEmail').value = "";
+    };
+}
 
 closeBtn.onclick = function() {
     modal.style.display = "none";
@@ -161,6 +290,12 @@ closeBtn.onclick = function() {
 window.onclick = function(event) {
     if (event.target == modal) {
         modal.style.display = "none";
+    }
+    if (event.target == externalLibsModal) {
+        externalLibsModal.style.display = "none";
+    }
+    if (event.target == shareModal) {
+        shareModal.style.display = "none";
     }
 }
 
@@ -204,3 +339,42 @@ function openLibraryModal(category, onSelect) {
 
     modal.style.display = "block";
 }
+
+// Exponer addIntegratedAudio globalmente
+window.addIntegratedAudio = function(title, url, category) {
+    window.addAudioWithTimeCalculation(title, url, category);
+    const externalLibsModal = document.getElementById('externalLibsModal');
+    if (externalLibsModal) {
+        externalLibsModal.style.display = "none";
+    }
+}
+
+window.addAudioWithTimeCalculation = function(title, url, category) {
+    import('./utils/timeUtils.js').then(module => {
+        const audio = new Audio(url);
+        audio.onloadedmetadata = function() {
+            const durSec = audio.duration;
+            let maxEnd = 0;
+            currentProgram.blocks.forEach(b => {
+                const e = module.timeToSeconds(b.endTime);
+                if (e > maxEnd) maxEnd = e;
+            });
+            
+            const startSec = maxEnd;
+            const endSec = Math.floor(startSec + durSec);
+            
+            escaletaUI.addBlock('audio', {
+                title: title,
+                audioUrl: url,
+                category: category,
+                startTime: module.secondsToTime(startSec),
+                endTime: module.secondsToTime(endSec),
+                maxDuration: durSec
+            });
+        };
+        
+        audio.onerror = function() {
+            escaletaUI.addBlock('audio', { title: title, audioUrl: url, category: category });
+        };
+    });
+};

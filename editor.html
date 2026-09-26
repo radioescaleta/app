@@ -15,6 +15,7 @@
     <script src="https://cdnjs.cloudflare.com/ajax/libs/Sortable/1.15.0/Sortable.min.js"></script>
     <!-- html2pdf para descargar PDF -->
     <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
 </head>
 <body>
     <header>
@@ -24,9 +25,16 @@
             </a>
         </div>
         <div>
-            <input type="text" id="programTitle" value="Mi Programa de Radio" style="font-size: 18px; border: none; font-weight: bold; outline: none; text-align: center; width: 300px;">
+            <input type="text" id="programTitle" value="Mi Programa de Radio" style="font-size: 20px; border: none; border-bottom: 2px dashed transparent; font-weight: bold; outline: none; text-align: center; width: 350px; transition: border 0.2s; background: transparent; padding: 5px;" title="Haz clic para cambiar el nombre" onmouseover="this.style.borderBottom='2px dashed #ccc'" onmouseout="this.style.borderBottom='2px dashed transparent'">
         </div>
-        <div id="userProfile">
+        <div id="userProfile" style="display: flex; align-items: center;">
+            <div id="liveTimer" class="hidden" style="margin-right: 20px; font-size: 24px; font-weight: bold; font-family: monospace; display: flex; align-items: center; gap: 10px;">
+                <span id="timerDisplay">00:00</span>
+                <button id="btnTimerPlay" class="btn" style="padding: 5px 10px; background: transparent; color: var(--text-color);"><i class="fa-solid fa-play"></i></button>
+                <button id="btnTimerReset" class="btn" style="padding: 5px 10px; background: transparent; color: var(--text-color);"><i class="fa-solid fa-stop"></i></button>
+            </div>
+            <button id="btnShare" class="btn btn-secondary" style="margin-right: 10px; background-color: #9c27b0;"><i class="fa-solid fa-share-nodes"></i> Compartir</button>
+            <button id="btnLiveMode" class="btn" style="background-color: #ff9800; color: white; margin-right: 10px;"><i class="fa-solid fa-tower-broadcast"></i> Modo Directo</button>
             <button id="btnSave" class="btn btn-secondary"><i class="fa-solid fa-save"></i> Guardar</button>
         </div>
     </header>
@@ -40,8 +48,14 @@
                 <!-- Los botones de audio se generarán aquí -->
             </div>
 
-            <!-- Escaleta -->
-            <div class="escaleta-container" id="escaletaContainer">
+            <!-- Controles de Vista -->
+            <div style="display: flex; gap: 10px; margin-bottom: -10px;">
+                <button id="btnViewList" class="btn btn-secondary" style="background: var(--primary-color); border-bottom-left-radius: 0; border-bottom-right-radius: 0;"><i class="fa-solid fa-list"></i> Modo Lista</button>
+                <button id="btnViewGantt" class="btn btn-secondary" style="background: #9e9e9e; border-bottom-left-radius: 0; border-bottom-right-radius: 0;"><i class="fa-solid fa-chart-gantt"></i> Diagrama Gantt</button>
+            </div>
+
+            <!-- Escaleta (Lista) -->
+            <div class="escaleta-container" id="escaletaContainer" style="border-top-left-radius: 0;">
                 <div id="escaletaList">
                     <!-- Los bloques irán aquí -->
                 </div>
@@ -49,6 +63,11 @@
                 <div class="download-btn-container">
                     <button id="btnDownloadPdf"><i class="fa-solid fa-download"></i> Descargar escaleta</button>
                 </div>
+            </div>
+
+            <!-- Escaleta (Gantt) -->
+            <div class="gantt-container" id="ganttContainer" style="border-top-left-radius: 0;">
+                <!-- El diagrama de dibujará aquí dinámicamente -->
             </div>
         </div>
 
@@ -74,8 +93,19 @@
             <button class="upload-btn" id="btnUploadDrive">
                 <i class="fa-solid fa-cloud-arrow-up"></i> Subir
             </button>
+
+            <button class="add-block-btn" id="btnExternalLibs" style="margin-top: 10px; background-color: #bbdefb;">
+                <i class="fa-solid fa-globe"></i> Bibliotecas Libres
+            </button>
         </div>
     </div>
+
+    <footer style="text-align: center; padding: 20px; background: white; border-top: 1px solid #ddd; margin-top: 20px;">
+        <p><a href="privacidad.html" style="color: var(--secondary-color);">Política de Privacidad</a> | <a href="terminos.html" style="color: var(--secondary-color);">Términos de Uso</a></p>
+        <p style="margin-top: 10px; font-size: 0.9em; color: #666;">
+            <a rel="license" href="http://creativecommons.org/licenses/by-nc-sa/4.0/"><img alt="Licencia de Creative Commons" style="border-width:0; vertical-align: middle; margin-right: 5px;" src="https://i.creativecommons.org/l/by-nc-sa/4.0/88x31.png" /></a><br />Este obra está bajo una <a rel="license" href="http://creativecommons.org/licenses/by-nc-sa/4.0/" style="color: #666;">licencia de Creative Commons Reconocimiento-NoComercial-CompartirIgual 4.0 Internacional</a>.
+        </p>
+    </footer>
 
     <!-- Modal Librería de Sonidos -->
     <div id="libraryModal" class="modal">
@@ -88,10 +118,72 @@
         </div>
     </div>
 
+    <!-- Modal Bibliotecas Externas -->
+    <div id="externalLibsModal" class="modal">
+        <div class="modal-content" style="max-width: 600px;">\
+            <span class="close-modal" id="closeExternalLibs">&times;</span>\
+            <h2>Bibliotecas de Sonido</h2>\
+            \
+            <div style="margin: 20px 0; background: #f9f9f9; padding: 15px; border-radius: 8px; border: 1px solid #ddd;">\
+                <h3 style="margin-bottom: 10px; color: #4caf50; font-size: 16px;"><i class="fa-solid fa-box-open"></i> Audios Integrados (Listos para usar)</h3>\
+                <p style="font-size: 13px; margin-bottom: 10px; color: #555;">Haz clic en uno de estos botones para añadirlo automáticamente al final de tu escaleta:</p>\
+                <div style="display: flex; gap: 8px; flex-wrap: wrap;">\
+                    <button class="btn btn-secondary" style="font-size: 12px; padding: 5px 10px;" onclick="addIntegratedAudio('Sintonía Noticias', 'assets/sounds/sintonia_noticias.mp3', 'sintonia')">Sintonía Noticias</button>\
+                    <button class="btn btn-secondary" style="font-size: 12px; padding: 5px 10px;" onclick="addIntegratedAudio('Música Tranquila', 'assets/sounds/musica_tranquila.mp3', 'musica')">Música Tranquila</button>\
+                    <button class="btn btn-secondary" style="font-size: 12px; padding: 5px 10px;" onclick="addIntegratedAudio('Aplausos', 'assets/sounds/aplausos.mp3', 'efectos')">Aplausos</button>\
+                    <button class="btn btn-secondary" style="font-size: 12px; padding: 5px 10px;" onclick="addIntegratedAudio('Risas', 'assets/sounds/risas.mp3', 'efectos')">Risas</button>\
+                    <button class="btn btn-secondary" style="font-size: 12px; padding: 5px 10px;" onclick="addIntegratedAudio('Campanilla', 'assets/sounds/campanilla.mp3', 'efectos')">Campanilla</button>\
+                </div>\
+            </div>\
+\
+            <hr style="margin: 20px 0; border: 0; border-top: 1px solid #ccc;">\
+\
+            <h3 style="margin-bottom: 10px; font-size: 16px;"><i class="fa-solid fa-globe"></i> Bibliotecas Externas (Para descargar)</h3>\
+            <p style="margin-top: 10px; margin-bottom: 20px; font-size: 13px; color: #555;">Descarga audios gratuitos desde estas páginas y luego usa el botón "Añadir audio" para subirlos a tu escaleta.</p>\
+            \
+            <ul class="library-list">\
+                <li class="library-item" style="display: flex; flex-direction: column; align-items: flex-start; gap: 5px;">\
+                    <strong><a href="https://sound-effects.bbcrewind.co.uk/" target="_blank" style="color: var(--secondary-color); text-decoration: none;"><i class="fa-solid fa-arrow-up-right-from-square"></i> BBC Sound Effects</a></strong>\
+                    <small style="color: #666;">Más de 33.000 efectos de sonido de la BBC. Licencia RemArc (uso educativo y personal permitido).</small>\
+                </li>\
+                <li class="library-item" style="display: flex; flex-direction: column; align-items: flex-start; gap: 5px;">\
+                    <strong><a href="https://freesound.org/" target="_blank" style="color: var(--secondary-color); text-decoration: none;"><i class="fa-solid fa-arrow-up-right-from-square"></i> Freesound</a></strong>\
+                    <small style="color: #666;">Enorme base de datos colaborativa de fragmentos de audio, samples y ruidos bajo licencias Creative Commons.</small>\
+                </li>\
+                <li class="library-item" style="display: flex; flex-direction: column; align-items: flex-start; gap: 5px;">\
+                    <strong><a href="https://incompetech.com/music/royalty-free/music.html" target="_blank" style="color: var(--secondary-color); text-decoration: none;"><i class="fa-solid fa-arrow-up-right-from-square"></i> Incompetech</a></strong>\
+                    <small style="color: #666;">Música de fondo gratuita y de alta calidad creada por Kevin MacLeod. Muy usada en YouTube.</small>\
+                </li>\
+                <li class="library-item" style="display: flex; flex-direction: column; align-items: flex-start; gap: 5px;">\
+                    <strong><a href="https://commons.wikimedia.org/wiki/Category:Audio_files" target="_blank" style="color: var(--secondary-color); text-decoration: none;"><i class="fa-solid fa-arrow-up-right-from-square"></i> Wikimedia Commons</a></strong>\
+                    <small style="color: #666;">Archivos de audio subidos a los proyectos de Wikipedia, totalmente libres de derechos.</small>\
+                </li>\
+            </ul>\
+        </div>
+
+    <!-- Modal Compartir -->
+    <div id="shareModal" class="modal">
+        <div class="modal-content" style="max-width: 400px;">
+            <span class="close-modal" id="closeShareModal">&times;</span>
+            <h2>Compartir Programa</h2>
+            <p style="margin-top: 10px; font-size: 14px;">Añade el correo de otro usuario (que ya haya iniciado sesión alguna vez en Radioescaleta) para colaborar.</p>
+            
+            <div style="margin-top: 20px; display: flex; flex-direction: column; gap: 10px;">
+                <input type="email" id="shareEmail" placeholder="Correo del alumno o profesor" style="padding: 10px; border-radius: 5px; border: 1px solid #ccc;">
+                <select id="shareRole" style="padding: 10px; border-radius: 5px; border: 1px solid #ccc;">
+                    <option value="editor">Editor (Puede modificar)</option>
+                    <option value="lector">Lector (Solo ver y modo directo)</option>
+                </select>
+                <button id="btnConfirmShare" class="btn btn-primary" style="background-color: #9c27b0;">Invitar</button>
+            </div>
+        </div>
+    </div>
+
     <!-- Elemento de audio global oculto para reproducir -->
     <audio id="globalAudioPlayer" style="display:none;"></audio>
 
     <!-- Scripts (Módulos JS) -->
-    <script type="module" src="./js/editor.js"></script>
+    <script type="module" src="./js/editor.js?v=2"></script>
+    <div id="toastMessage" style="visibility: hidden; min-width: 250px; background-color: #333; color: #fff; text-align: center; border-radius: 5px; padding: 16px; position: fixed; z-index: 2000; left: 50%; bottom: 30px; transform: translateX(-50%); opacity: 0; transition: opacity 0.3s, visibility 0.3s;">Guardado correctamente</div>
 </body>
 </html>

@@ -11,7 +11,7 @@ class AuthService {
     async login() {
         if (!auth) {
             // Modo demo si Firebase no está configurado
-            this.currentUser = { uid: "demo123", displayName: "Usuario Demo" };
+            this.currentUser = { uid: "demo123", displayName: "Usuario Demo", email: "demo@educaand.es" };
             return this.currentUser;
         }
 

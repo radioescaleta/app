@@ -1,5 +1,5 @@
 // js/services/dbService.js
-import { collection, doc, setDoc, getDoc, getDocs, query, where, addDoc } from "https://www.gstatic.com/firebasejs/10.4.0/firebase-firestore.js";
+import { collection, doc, setDoc, getDoc, getDocs, query, where, addDoc, deleteDoc } from "https://www.gstatic.com/firebasejs/10.4.0/firebase-firestore.js";
 import { db } from "./firebaseConfig.js";
 
 class DbService {
@@ -40,14 +40,23 @@ class DbService {
         }
 
         try {
-            const q = query(collection(db, "programs"), where("ownerId", "==", userId));
-            const querySnapshot = await getDocs(q);
-            const programs = [];
-            querySnapshot.forEach((doc) => {
-                programs.push({ id: doc.id, ...doc.data() });
+            const q1 = query(collection(db, "programs"), where("ownerId", "==", userId));
+            // Buscar donde es editor o lector (usando in)
+            const q2 = query(collection(db, "programs"), where(`collaborators.${userId}`, "in", ["editor", "lector", "comentador"]));
+            
+            const [snap1, snap2] = await Promise.all([getDocs(q1), getDocs(q2)]);
+            
+            const programsMap = new Map();
+            
+            snap1.forEach((doc) => {
+                programsMap.set(doc.id, { id: doc.id, ...doc.data() });
             });
-            // TODO: También obtener programas donde el usuario es colaborador
-            return programs;
+            
+            snap2.forEach((doc) => {
+                programsMap.set(doc.id, { id: doc.id, ...doc.data(), shared: true });
+            });
+            
+            return Array.from(programsMap.values());
         } catch (error) {
             console.error("Error obteniendo programas: ", error);
             return [];
@@ -69,6 +78,55 @@ class DbService {
             return null;
         } catch (error) {
             console.error("Error obteniendo programa por ID: ", error);
+            return null;
+        }
+    }
+
+    async deleteProgram(programId) {
+        if (!db) {
+            // Modo demo
+            let programs = JSON.parse(localStorage.getItem('demoPrograms') || '[]');
+            programs = programs.filter(p => p.id !== programId);
+            localStorage.setItem('demoPrograms', JSON.stringify(programs));
+            return;
+        }
+        
+        try {
+            await deleteDoc(doc(db, "programs", programId));
+        } catch (error) {
+            console.error("Error borrando programa: ", error);
+            throw error;
+        }
+    }
+
+    async saveUser(user) {
+        if (!db) return;
+        try {
+            const docRef = doc(db, "users", user.uid);
+            await setDoc(docRef, {
+                uid: user.uid,
+                email: user.email,
+                displayName: user.displayName
+            }, { merge: true });
+        } catch (e) {
+            console.error("Error guardando usuario: ", e);
+        }
+    }
+
+    async getUserByEmail(email) {
+        if (!db) {
+            // Modo demo
+            return email === 'demo@educaand.es' ? { uid: 'demo999', email: 'demo@educaand.es' } : null;
+        }
+        try {
+            const q = query(collection(db, "users"), where("email", "==", email));
+            const querySnapshot = await getDocs(q);
+            if (!querySnapshot.empty) {
+                return querySnapshot.docs[0].data();
+            }
+            return null;
+        } catch (e) {
+            console.error("Error buscando usuario: ", e);
             return null;
         }
     }

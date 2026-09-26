@@ -13,13 +13,14 @@ document.addEventListener('DOMContentLoaded', () => {
     const userName = document.getElementById('userName');
     const programsList = document.getElementById('programsList');
 
-    authService.onAuthStateChanged((user) => {
+    authService.onAuthStateChanged(async (user) => {
         if (user) {
             // Usuario logueado
             loginSection.classList.add('hidden');
             dashboardSection.classList.remove('hidden');
             userProfile.classList.remove('hidden');
             userName.innerText = user.displayName || user.email || "Usuario";
+            await dbService.saveUser(user);
             loadPrograms(user.uid);
         } else {
             // No logueado
@@ -38,7 +39,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 window.location.reload();
             }
         } catch (error) {
-            alert("Error al iniciar sesión");
+            Swal.fire("Error", "Error al iniciar sesión", "error");
         }
     });
 
@@ -69,14 +70,55 @@ document.addEventListener('DOMContentLoaded', () => {
             
             const date = new Date(program.createdAt).toLocaleDateString();
             
+            const isOwner = program.ownerId === userId;
+            const badge = program.shared ? '<span style="background: #9c27b0; color: white; padding: 2px 5px; border-radius: 3px; font-size: 12px; float: right;">Compartido</span>' : '';
+            
             card.innerHTML = `
-                <h3>${program.title}</h3>
+                <h3>${program.title} ${badge}</h3>
                 <p><small>Creado: ${date}</small></p>
                 <div class="program-actions">
                     <a href="editor.html?id=${program.id}" class="btn btn-primary" style="flex:1;">Editar</a>
+                    ${isOwner ? `<button class="btn btn-secondary btn-delete" data-id="${program.id}" style="background-color: #f44336;"><i class="fa-solid fa-trash"></i></button>` : ''}
                 </div>
             `;
             programsList.appendChild(card);
+        });
+
+        // Eventos para botones de borrar
+        document.querySelectorAll('.btn-delete').forEach(btn => {
+            btn.addEventListener('click', async (e) => {
+                const btnEl = e.currentTarget;
+                                const result = await Swal.fire({
+                    title: '¿Borrar programa?',
+                    text: "Esta acción no se puede deshacer.",
+                    icon: 'warning',
+                    showCancelButton: true,
+                    confirmButtonColor: '#f44336',
+                    cancelButtonColor: '#607d8b',
+                    confirmButtonText: 'Sí, borrar',
+                    cancelButtonText: 'Cancelar'
+                });
+                
+                if (result.isConfirmed) {
+                    btnEl.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i>';
+                    btnEl.disabled = true;
+                    try {
+                        await dbService.deleteProgram(btnEl.dataset.id);
+                        loadPrograms(userId);
+                        Swal.fire('¡Borrado!', 'Tu programa ha sido eliminado.', 'success');
+                    } catch (error) {
+                        console.error(error);
+                        Swal.fire({
+                            icon: 'error',
+                            title: 'Error al borrar',
+                            text: error.message,
+                            footer: 'Asegúrate de haber desplegado firestore.rules en Firebase.'
+                        });
+                        btnEl.innerHTML = '<i class="fa-solid fa-trash"></i>';
+                        btnEl.disabled = false;
+                    }
+                }
+            });
         });
     }
 });
