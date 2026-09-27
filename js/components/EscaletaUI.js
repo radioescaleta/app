@@ -278,6 +278,48 @@ export class EscaletaUI {
             actions.className = 'block-actions';
             
             if (block.type === 'text') {
+                // Selector de voz para este bloque
+                const voiceSelect = document.createElement('select');
+                voiceSelect.className = 'block-voice-select';
+                voiceSelect.style.cssText = 'padding: 4px; font-size: 11px; margin-right: 5px; max-width: 130px; border-radius: 4px; border: 1px solid #ccc;';
+                voiceSelect.title = "Las voces dependen de tu Sistema Operativo (Windows, Mac, etc.)";
+                
+                const populateBlockVoice = () => {
+                    voiceSelect.innerHTML = '';
+                    if (window.availableVoices && window.availableVoices.length > 0) {
+                        window.availableVoices.forEach(v => {
+                            const opt = document.createElement('option');
+                            opt.value = v.voiceURI;
+                            opt.textContent = v.name.replace(/Microsoft |Google |Apple /gi, '');
+                            if (block.voiceURI === v.voiceURI) opt.selected = true;
+                            voiceSelect.appendChild(opt);
+                        });
+                        // Asegurar que guardamos la voz seleccionada
+                        if (!block.voiceURI && voiceSelect.value) {
+                            block.voiceURI = voiceSelect.value;
+                        }
+                    } else {
+                        voiceSelect.innerHTML = '<option value="">Sin voces disponibles</option>';
+                    }
+                };
+                
+                populateBlockVoice();
+                window.addEventListener('tts_voices_loaded', populateBlockVoice);
+                
+                voiceSelect.addEventListener('change', (e) => {
+                    block.voiceURI = e.target.value;
+                    this.notifyUpdate(); // Guardar al cambiar
+                });
+
+                const infoIcon = document.createElement('i');
+                infoIcon.className = 'fa-solid fa-circle-info';
+                infoIcon.style.cssText = 'color: #999; font-size: 11px; margin-right: 8px; cursor: help;';
+                infoIcon.title = "Atención: Las voces mostradas dependen exclusivamente del sistema operativo de tu ordenador (Windows, macOS, etc.) y del navegador que estés usando.";
+                
+                actions.appendChild(voiceSelect);
+                actions.appendChild(infoIcon);
+
+                // Botón Leer
                 const btnSpeak = document.createElement('button');
                 btnSpeak.innerHTML = '<i class="fa-solid fa-volume-high"></i>';
                 btnSpeak.title = "Leer texto en voz alta";
@@ -290,8 +332,8 @@ export class EscaletaUI {
                     } else if (input.value.trim() !== '') {
                         const utterance = new SpeechSynthesisUtterance(input.value);
                         utterance.lang = 'es-ES'; // Castellano
-                        if (typeof window.getSelectedVoice === 'function') {
-                            const selectedVoice = window.getSelectedVoice();
+                        if (typeof window.getVoiceByURI === 'function') {
+                            const selectedVoice = window.getVoiceByURI(block.voiceURI);
                             if (selectedVoice) {
                                 utterance.voice = selectedVoice;
                             }

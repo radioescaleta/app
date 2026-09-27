@@ -4,7 +4,7 @@ import { cloudinaryService } from './services/cloudinaryService.js';
 import { setupUserProfile } from './utils/profileUI.js?v=8';
 import { dbService } from './services/dbService.js?v=5';
 import { Program } from './models/Program.js';
-import { EscaletaUI } from './components/EscaletaUI.js';
+import { EscaletaUI } from './components/EscaletaUI.js?v=2';
 import { AudioBoard } from './components/AudioBoard.js';
 import { GanttUI } from './components/GanttUI.js';
 import { downloadPDF } from './utils/pdfGenerator.js';
@@ -286,36 +286,26 @@ async function initEditor(user) {
     });
 
 
-    // Configuración de Voces TTS
-    let availableVoices = [];
-    const voiceSelect = document.getElementById('voiceSelect');
-    
+    // Configuración de Voces TTS (Global)
+    window.availableVoices = [];
     function populateVoiceList() {
         if (typeof speechSynthesis === 'undefined') return;
-        availableVoices = speechSynthesis.getVoices().filter(v => v.lang.startsWith('es') || v.name.toLowerCase().includes('español') || v.name.toLowerCase().includes('spanish'));
-        
-        if (availableVoices.length > 0) {
-            voiceSelect.style.display = 'inline-block';
-            voiceSelect.innerHTML = '';
-            availableVoices.forEach((voice, index) => {
-                const option = document.createElement('option');
-                option.textContent = voice.name;
-                option.value = index;
-                voiceSelect.appendChild(option);
-            });
-        }
+        window.availableVoices = speechSynthesis.getVoices().filter(v => 
+            v.lang.startsWith('es') || v.name.toLowerCase().includes('español') || v.name.toLowerCase().includes('spanish')
+        );
+        window.dispatchEvent(new Event('tts_voices_loaded'));
     }
     
-    if (typeof speechSynthesis !== 'undefined' && speechSynthesis.onvoiceschanged !== undefined) {
-        speechSynthesis.onvoiceschanged = populateVoiceList;
-    }
-    setTimeout(populateVoiceList, 500); // Fallback
-    
-    window.getSelectedVoice = function() {
-        if (availableVoices.length > 0 && voiceSelect.value !== "") {
-            return availableVoices[voiceSelect.value];
+    if (typeof speechSynthesis !== 'undefined') {
+        if (speechSynthesis.onvoiceschanged !== undefined) {
+            speechSynthesis.onvoiceschanged = populateVoiceList;
         }
-        return null;
+        setTimeout(populateVoiceList, 500); // Fallback
+    }
+    
+    window.getVoiceByURI = function(uri) {
+        if (!window.availableVoices || window.availableVoices.length === 0) return null;
+        return window.availableVoices.find(v => v.voiceURI === uri) || window.availableVoices[0];
     };
 
     // Modo Directo y Cronómetro

@@ -235,9 +235,13 @@ let currentCat = 'efectos';
 let currentAudio = null;
 
 authService.onAuthStateChanged(async (user) => {
-    if (!user || user.email !== SUPERADMIN_EMAIL) {
+    if (!user) { window.location.href = 'index.html'; return; }
+    
+    const profile = await dbService.getUserProfile(user.uid);
+    if (!profile || profile.role !== 'superadmin') {
         window.location.href = 'index.html'; return;
     }
+    
     await loadSounds();
 });
 

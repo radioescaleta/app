@@ -30,15 +30,18 @@ document.addEventListener('DOMContentLoaded', () => {
 
                 // Mostrar badge de rol
                 if (userRoleBadge) {
-                    const roleLabels = {
-                        superadmin: { label: 'Superadmin', color: '#b71c1c' },
-                        docente: { label: 'Docente', color: '#1565c0' },
-                        alumno: { label: profile.clase || 'Alumno', color: '#2e7d32' }
-                    };
-                    const roleInfo = roleLabels[profile.role] || roleLabels.alumno;
-                    userRoleBadge.textContent = roleInfo.label;
-                    userRoleBadge.style.backgroundColor = roleInfo.color;
-                    userRoleBadge.style.display = 'inline-block';
+                    if (profile.role === 'superadmin') {
+                        userRoleBadge.style.display = 'none';
+                    } else {
+                        const roleLabels = {
+                            docente: { label: 'Docente', color: '#1565c0' },
+                            alumno: { label: profile.clase || 'Alumno', color: '#2e7d32' }
+                        };
+                        const roleInfo = roleLabels[profile.role] || roleLabels.alumno;
+                        userRoleBadge.textContent = roleInfo.label;
+                        userRoleBadge.style.backgroundColor = roleInfo.color;
+                        userRoleBadge.style.display = 'inline-block';
+                    }
                 }
 
                 // Mostrar botones de panel según rol

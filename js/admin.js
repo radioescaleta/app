@@ -77,25 +77,26 @@ document.addEventListener('DOMContentLoaded', () => {
         statsBar.innerHTML     = '<div style="color:#aaa;"><i class="fa-solid fa-spinner fa-spin"></i> Calculando...</div>';
 
         const allUsers = await dbService.getAllUsers();
+        const superadmins = allUsers.filter(u => u.role === 'superadmin');
         const docentes = allUsers.filter(u => u.role === 'docente');
         const alumnos  = allUsers.filter(u => u.role === 'alumno');
         const sinRol   = allUsers.filter(u => !u.role || u.role === '');
 
         // Stats globales
         statsBar.innerHTML = `
+            <div class="stat-item"><div class="num">${superadmins.length}</div><div class="lbl">Superadmins</div></div>
             <div class="stat-item"><div class="num">${docentes.length}</div><div class="lbl">Docentes</div></div>
             <div class="stat-item"><div class="num">${alumnos.length}</div><div class="lbl">Alumnos</div></div>
-            <div class="stat-item"><div class="num">${sinRol.length}</div><div class="lbl">Sin rol</div></div>
-            <div class="stat-item"><div class="num">${allUsers.length}</div><div class="lbl">Total usuarios</div></div>
+            <div class="stat-item"><div class="num">${allUsers.length}</div><div class="lbl">Total</div></div>
         `;
 
-        if (docentes.length === 0 && sinRol.length === 0) {
-            docentesList.innerHTML = '<p style="color:#aaa;">No hay docentes registrados.</p>';
+        if (superadmins.length === 0 && docentes.length === 0 && sinRol.length === 0) {
+            docentesList.innerHTML = '<p style="color:#aaa;">No hay docentes ni superadmins registrados.</p>';
             return;
         }
 
-        // Mostrar docentes + usuarios sin rol
-        const toShow = [...docentes, ...sinRol];
+        // Mostrar superadmins + docentes + usuarios sin rol
+        const toShow = [...superadmins, ...docentes, ...sinRol];
         docentesList.innerHTML = '';
 
         for (const d of toShow) {
@@ -127,10 +128,11 @@ document.addEventListener('DOMContentLoaded', () => {
             alumnoProgTotal += c;
         }
 
-        const avatarColor = isDocente ? '#f06292' : '#aaa';
+        const isSuperadmin = d.role === 'superadmin';
+        const avatarColor = isSuperadmin ? '#b71c1c' : (isDocente ? '#f06292' : '#aaa');
         const avatarLetter = (d.displayName || d.email || '?')[0].toUpperCase();
-        const roleLabel = isDocente ? 'Docente' : 'Sin rol';
-        const roleBg    = isDocente ? '#f06292' : '#ff9800';
+        const roleLabel = isSuperadmin ? 'Superadmin' : (isDocente ? 'Docente' : 'Sin rol');
+        const roleBg    = isSuperadmin ? '#b71c1c' : (isDocente ? '#f06292' : '#ff9800');
 
         const item = document.createElement('div');
         item.className = 'user-item';
@@ -150,6 +152,8 @@ document.addEventListener('DOMContentLoaded', () => {
                 </div>
                 <span class="role-badge" style="background:${roleBg};">${roleLabel}</span>
                 <div class="user-actions">
+                    ${isDocente ? `<button class="btn-icon btn-promote" title="Hacer Superadmin" style="background:#e8f5e9; color:#2e7d32;" data-docid="${d.docId}" data-email="${d.email}"><i class="fa-solid fa-arrow-up-right-dots"></i></button>` : ''}
+                    ${isSuperadmin ? `<button class="btn-icon btn-demote" title="Quitar Superadmin (Hacer Docente)" style="background:#fff3e0; color:#ef6c00;" data-docid="${d.docId}" data-email="${d.email}"><i class="fa-solid fa-arrow-down"></i></button>` : ''}
                     <button class="btn-icon" title="Eliminar" style="background:#fce4ec; color:#f06292;" data-delete="${d.docId}">
                         <i class="fa-solid fa-trash"></i>
                     </button>
@@ -206,6 +210,52 @@ document.addEventListener('DOMContentLoaded', () => {
             btn.innerHTML = '<i class="fa-solid fa-floppy-disk"></i> Guardar centro';
             loadAll();
         });
+
+        // Promover a superadmin
+        const promoteBtn = item.querySelector('.btn-promote');
+        if (promoteBtn) {
+            promoteBtn.addEventListener('click', async (e) => {
+                e.stopPropagation();
+                const docId = promoteBtn.dataset.docid;
+                const email = promoteBtn.dataset.email;
+                const r = await Swal.fire({
+                    title: '¿Hacer Superadmin?',
+                    html: `<b>${email}</b> tendrá acceso a este panel y control total.`,
+                    icon: 'question',
+                    showCancelButton: true,
+                    confirmButtonText: 'Sí, promover',
+                    confirmButtonColor: '#2e7d32'
+                });
+                if (r.isConfirmed) {
+                    await dbService.updateUserField(docId, { role: 'superadmin' });
+                    Swal.fire({toast:true, position:'bottom', icon:'success', title:'Ahora es superadmin', showConfirmButton:false, timer:3000});
+                    loadAll();
+                }
+            });
+        }
+
+        // Quitar superadmin
+        const demoteBtn = item.querySelector('.btn-demote');
+        if (demoteBtn) {
+            demoteBtn.addEventListener('click', async (e) => {
+                e.stopPropagation();
+                const docId = demoteBtn.dataset.docid;
+                const email = demoteBtn.dataset.email;
+                const r = await Swal.fire({
+                    title: '¿Quitar rol de Superadmin?',
+                    html: `<b>${email}</b> pasará a ser Docente experto.`,
+                    icon: 'warning',
+                    showCancelButton: true,
+                    confirmButtonText: 'Sí, quitar',
+                    confirmButtonColor: '#ef6c00'
+                });
+                if (r.isConfirmed) {
+                    await dbService.updateUserField(docId, { role: 'docente' });
+                    Swal.fire({toast:true, position:'bottom', icon:'success', title:'Ahora es docente', showConfirmButton:false, timer:3000});
+                    loadAll();
+                }
+            });
+        }
 
         // Eliminar usuario(s)
         item.querySelectorAll('[data-delete]').forEach(btn => {
