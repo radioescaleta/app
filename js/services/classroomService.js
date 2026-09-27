@@ -8,6 +8,8 @@ class ClassroomService {
         const provider = new GoogleAuthProvider();
         provider.addScope('https://www.googleapis.com/auth/classroom.courses.readonly');
         provider.addScope('https://www.googleapis.com/auth/classroom.rosters.readonly');
+        provider.addScope('https://www.googleapis.com/auth/classroom.profile.emails');
+
         provider.setCustomParameters({
             prompt: 'select_account'
         });

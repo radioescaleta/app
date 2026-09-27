@@ -1,5 +1,6 @@
 // js/index.js
 import { authService } from './services/authService.js?v=2';
+import { setupUserProfile } from './utils/profileUI.js?v=4';
 import { dbService } from './services/dbService.js?v=4';
 
 document.addEventListener('DOMContentLoaded', () => {
@@ -25,7 +26,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 loginSection.classList.add('hidden');
                 dashboardSection.classList.remove('hidden');
                 userProfile.classList.remove('hidden');
-                userName.innerText = profile.displayName || user.email;
+                setupUserProfile(user, profile);
 
                 // Mostrar badge de rol
                 if (userRoleBadge) {
@@ -92,11 +93,7 @@ document.addEventListener('DOMContentLoaded', () => {
         }
     });
 
-    btnLogout.addEventListener('click', async () => {
-        await authService.logout();
-        sessionStorage.removeItem('userProfile');
-        window.location.reload();
-    });
+    
 
     btnNewProgram.addEventListener('click', () => {
         window.location.href = 'editor.html';
@@ -120,7 +117,36 @@ document.addEventListener('DOMContentLoaded', () => {
         
         programsList.innerHTML = '';
         if (programs.length === 0) {
-            programsList.innerHTML = '<p>No tienes programas. ¡Crea uno nuevo!</p>';
+            
+            programsList.innerHTML = `
+                <div class="empty-dashboard" style="grid-column: 1 / -1;">
+                    <div class="empty-dashboard-icon">
+                        <i class="fa-solid fa-microphone-lines"></i>
+                    </div>
+                    <h3>Tu estudio de radio está vacío</h3>
+                    <p class="empty-desc">Aún no has creado ninguna escaleta. Empezar es muy sencillo, solo sigue estos tres pasos:</p>
+                    
+                    <div class="empty-steps">
+                        <div class="empty-step">
+                            <div class="empty-step-icon"><i class="fa-solid fa-plus"></i></div>
+                            <p><b>1. Crea tu programa</b><br>Dale al botón rosa de arriba a la derecha.</p>
+                        </div>
+                        <div class="empty-step">
+                            <div class="empty-step-icon"><i class="fa-solid fa-list"></i></div>
+                            <p><b>2. Añade bloques</b><br>Escribe tu guión de locución y añade los audios.</p>
+                        </div>
+                        <div class="empty-step">
+                            <div class="empty-step-icon"><i class="fa-solid fa-play"></i></div>
+                            <p><b>3. Modo Directo</b><br>Ensaya y graba tu piloto antes del directo real.</p>
+                        </div>
+                    </div>
+                    
+                    <button class="btn btn-primary" onclick="document.getElementById('btnNewProgram').click()" style="font-size: 1.1em; padding: 12px 24px; box-shadow: 0 4px 12px rgba(240,98,146,0.3);">
+                        <i class="fa-solid fa-plus"></i> Crear mi primer programa
+                    </button>
+                </div>
+            `;
+
             return;
         }
 
@@ -225,3 +251,5 @@ document.addEventListener('DOMContentLoaded', () => {
         });
     }
 });
+
+

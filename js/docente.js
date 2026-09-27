@@ -1,6 +1,6 @@
 // js/docente.js
 import { authService } from './services/authService.js?v=2';
-import { classroomService } from './services/classroomService.js';
+import { classroomService } from './services/classroomService.js?v=2';
 import { dbService } from './services/dbService.js?v=4';
 
 document.addEventListener('DOMContentLoaded', () => {

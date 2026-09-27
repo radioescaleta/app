@@ -1,7 +1,5 @@
 // js/editor.js
 import { authService } from './services/authService.js?v=2';
-import { cloudinaryService } from './services/cloudinaryService.js';
-import { setupUserProfile } from './utils/profileUI.js?v=4';
 import { dbService } from './services/dbService.js?v=4';
 import { Program } from './models/Program.js';
 import { EscaletaUI } from './components/EscaletaUI.js';
@@ -36,8 +34,6 @@ document.addEventListener('DOMContentLoaded', async () => {
             return;
         }
         await dbService.saveUser(user);
-        const profile = await dbService.getUserProfile(user.uid) || {};
-        setupUserProfile(user, profile);
         await initEditor(user);
     });
 });
@@ -197,6 +193,7 @@ async function initEditor(user) {
     });
 
     // 3. Cargar programa si hay ID en la URL
+    const urlParams = new URLSearchParams(window.location.search);
     const programId = urlParams.get('id');
 
     if (programId) {

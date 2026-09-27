@@ -288,3 +288,67 @@
     display: flex;
     gap: 10px;
 }
+
+/* ===== DASHBOARD EMPTY STATE ===== */
+.empty-dashboard {
+    text-align: center;
+    padding: 60px 20px;
+    background: #f8f9fa;
+    border-radius: 16px;
+    border: 2px dashed #ddd;
+    margin-top: 30px;
+    color: #555;
+}
+
+.empty-dashboard-icon {
+    font-size: 4em;
+    color: #f06292;
+    margin-bottom: 20px;
+    opacity: 0.8;
+}
+
+.empty-dashboard h3 {
+    font-size: 1.6em;
+    color: #333;
+    margin-bottom: 12px;
+}
+
+.empty-dashboard p.empty-desc {
+    font-size: 1.05em;
+    max-width: 500px;
+    margin: 0 auto 30px;
+    line-height: 1.6;
+}
+
+.empty-steps {
+    display: flex;
+    justify-content: center;
+    gap: 30px;
+    margin-bottom: 40px;
+    flex-wrap: wrap;
+}
+
+.empty-step {
+    width: 160px;
+}
+
+.empty-step-icon {
+    width: 48px;
+    height: 48px;
+    background: white;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin: 0 auto 12px;
+    font-size: 1.2em;
+    color: #00acc1;
+    box-shadow: 0 3px 10px rgba(0,0,0,0.08);
+}
+
+.empty-step p {
+    font-size: 0.9em;
+    margin: 0;
+    line-height: 1.4;
+    color: #666;
+}
