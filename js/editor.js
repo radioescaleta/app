@@ -1,7 +1,7 @@
 // js/editor.js
 import { authService } from './services/authService.js?v=2';
 import { cloudinaryService } from './services/cloudinaryService.js';
-import { setupUserProfile } from './utils/profileUI.js?v=4';
+import { setupUserProfile } from './utils/profileUI.js?v=7';
 import { dbService } from './services/dbService.js?v=4';
 import { Program } from './models/Program.js';
 import { EscaletaUI } from './components/EscaletaUI.js';

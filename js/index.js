@@ -1,6 +1,6 @@
 // js/index.js
 import { authService } from './services/authService.js?v=2';
-import { setupUserProfile } from './utils/profileUI.js?v=4';
+import { setupUserProfile } from './utils/profileUI.js?v=7';
 import { dbService } from './services/dbService.js?v=4';
 
 document.addEventListener('DOMContentLoaded', () => {

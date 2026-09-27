@@ -67,13 +67,7 @@ function openAvatarEditor(user, profile, currentUrl) {
         currentSkin = u.searchParams.get('skinColor') || '';
         currentHair = u.searchParams.get('hairColor') || '';
         
-        // Reverse map the 'top' param if possible, else default to empty
-        const topParam = u.searchParams.get('top') || '';
-        if (topParam.includes('shortHair')) currentTop = 'corto';
-        else if (topParam.includes('longHair')) currentTop = 'largo';
-        else if (topParam.includes('hat')) currentTop = 'hat';
-        else if (topParam.includes('hijab')) currentTop = 'hijab';
-        else if (topParam.includes('turban')) currentTop = 'turban';
+        currentTop = u.searchParams.get('top') || '';
         
         currentAccessories = u.searchParams.get('accessories') || '';
     } catch(e){}
@@ -85,17 +79,7 @@ function openAvatarEditor(user, profile, currentUrl) {
             if (skin) url += `&skinColor=${skin}`;
             if (hair) url += `&hairColor=${hair}`;
             
-            const topMap = {
-                'corto': ['shortHairDreads01','shortHairDreads02','shortHairFrizzle','shortHairShaggy','shortHairShortCurly','shortHairShortFlat','shortHairShortRound','shortHairShortWaved','shortHairSides','shortHairTheCaesar'],
-                'largo': ['longHairBigHair','longHairBob','longHairBun','longHairCurly','longHairCurvy','longHairDreads','longHairFro','longHairNotTooLong','longHairStraight'],
-                'hijab': ['hijab'],
-                'turban': ['turban'],
-                'hat': ['hat','winterHat1','winterHat2','winterHat3','winterHat4']
-            };
-            if (top && topMap[top]) {
-                // En DiceBear v9, para mandar múltiples opciones a elegir, se repite el parámetro
-                url += topMap[top].map(t => `&top=${t}`).join('');
-            }
+            if (top) url += `&top=${top}`;
             if (acc) {
                 // Es necesario forzar la probabilidad al 100% para que siempre salgan las gafas
                 url += `&accessories=${acc}&accessoriesProbability=100`;
@@ -177,13 +161,48 @@ function openAvatarEditor(user, profile, currentUrl) {
 
                 <div style="display:flex; flex-direction:column; text-align:left;">
                     <label style="font-size:12px; margin-bottom:2px; color:#555;">Peinado / Cabeza</label>
-                    <select id="avTop" style="padding:6px; border-radius:6px; border:1px solid #ccc; font-size:13px;">
+                    <select id="avTop" style="padding:6px; border-radius:6px; border:1px solid #ccc; font-size:13px; max-width: 140px;">
                         <option value="">(Cualquiera)</option>
-                        <option value="corto" ${currentTop==='corto'?'selected':''}>Corto</option>
-                        <option value="largo" ${currentTop==='largo'?'selected':''}>Largo</option>
-                        <option value="hijab" ${currentTop==='hijab'?'selected':''}>Hijab</option>
-                        <option value="turban" ${currentTop==='turban'?'selected':''}>Turbante</option>
-                        <option value="hat" ${currentTop==='hat'?'selected':''}>Sombrero / Gorro</option>
+                        <optgroup label="Pelo Corto">
+                            <option value="dreads01" ${currentTop==='dreads01'?'selected':''}>Rastas 1</option>
+                            <option value="dreads02" ${currentTop==='dreads02'?'selected':''}>Rastas 2</option>
+                            <option value="frizzle" ${currentTop==='frizzle'?'selected':''}>Encrespado</option>
+                            <option value="shaggy" ${currentTop==='shaggy'?'selected':''}>Desgreñado</option>
+                            <option value="shaggyMullet" ${currentTop==='shaggyMullet'?'selected':''}>Mullet</option>
+                            <option value="shortCurly" ${currentTop==='shortCurly'?'selected':''}>Rizado Corto</option>
+                            <option value="shortFlat" ${currentTop==='shortFlat'?'selected':''}>Liso Corto</option>
+                            <option value="shortRound" ${currentTop==='shortRound'?'selected':''}>Redondeado</option>
+                            <option value="shortWaved" ${currentTop==='shortWaved'?'selected':''}>Ondulado</option>
+                            <option value="sides" ${currentTop==='sides'?'selected':''}>Rapado Lados</option>
+                            <option value="theCaesar" ${currentTop==='theCaesar'?'selected':''}>César</option>
+                            <option value="theCaesarAndSidePart" ${currentTop==='theCaesarAndSidePart'?'selected':''}>César c/Raya</option>
+                        </optgroup>
+                        <optgroup label="Pelo Largo">
+                            <option value="bigHair" ${currentTop==='bigHair'?'selected':''}>Voluminoso</option>
+                            <option value="bob" ${currentTop==='bob'?'selected':''}>Corte Bob</option>
+                            <option value="bun" ${currentTop==='bun'?'selected':''}>Moño</option>
+                            <option value="curly" ${currentTop==='curly'?'selected':''}>Rizado Largo</option>
+                            <option value="curvy" ${currentTop==='curvy'?'selected':''}>Ondulado Largo</option>
+                            <option value="dreads" ${currentTop==='dreads'?'selected':''}>Rastas Largas</option>
+                            <option value="frida" ${currentTop==='frida'?'selected':''}>Estilo Frida</option>
+                            <option value="fro" ${currentTop==='fro'?'selected':''}>Afro</option>
+                            <option value="froBand" ${currentTop==='froBand'?'selected':''}>Afro c/Cinta</option>
+                            <option value="miaWallace" ${currentTop==='miaWallace'?'selected':''}>Mia Wallace</option>
+                            <option value="longButNotTooLong" ${currentTop==='longButNotTooLong'?'selected':''}>Media Melena</option>
+                            <option value="shavedSides" ${currentTop==='shavedSides'?'selected':''}>Largo Rapado</option>
+                            <option value="straight01" ${currentTop==='straight01'?'selected':''}>Liso Largo 1</option>
+                            <option value="straight02" ${currentTop==='straight02'?'selected':''}>Liso Largo 2</option>
+                            <option value="straightAndStrand" ${currentTop==='straightAndStrand'?'selected':''}>Liso c/Flequillo</option>
+                        </optgroup>
+                        <optgroup label="Gorros">
+                            <option value="hijab" ${currentTop==='hijab'?'selected':''}>Hijab</option>
+                            <option value="turban" ${currentTop==='turban'?'selected':''}>Turbante</option>
+                            <option value="hat" ${currentTop==='hat'?'selected':''}>Sombrero</option>
+                            <option value="winterHat1" ${currentTop==='winterHat1'?'selected':''}>Invierno 1</option>
+                            <option value="winterHat02" ${currentTop==='winterHat2'?'selected':''}>Invierno 2</option>
+                            <option value="winterHat03" ${currentTop==='winterHat3'?'selected':''}>Invierno 3</option>
+                            <option value="winterHat04" ${currentTop==='winterHat4'?'selected':''}>Invierno 4</option>
+                        </optgroup>
                     </select>
                 </div>
 
