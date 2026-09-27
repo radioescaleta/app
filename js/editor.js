@@ -338,7 +338,14 @@ async function initEditor(user) {
     });
 
     // Subir a Drive
-    document.getElementById('btnUploadDrive').addEventListener('click', () => {
+    document.getElementById('btnUploadDrive').addEventListener('click', async () => {
+        try {
+            await driveService.ensureAuthenticated();
+        } catch(err) {
+            Swal.fire("Error", "No se concedieron permisos de Google Drive o el navegador bloqueó la ventana.", "error");
+            return;
+        }
+
         // Creamos un input de archivo invisible para seleccionar el audio local
         const fileInput = document.createElement('input');
         fileInput.type = 'file';

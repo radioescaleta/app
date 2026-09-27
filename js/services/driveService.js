@@ -77,6 +77,22 @@ class DriveService {
         };
     }
 
+async ensureAuthenticated() {
+        if (!this.tokenClient) return Promise.resolve();
+        if (this.accessToken) return Promise.resolve();
+
+        return new Promise((resolve, reject) => {
+            this.tokenClient.callback = (resp) => {
+                if (resp.error !== undefined) {
+                    reject(resp.error);
+                }
+                this.accessToken = resp.access_token;
+                resolve();
+            };
+            this.tokenClient.requestAccessToken({prompt: 'consent'});
+        });
+    }
+
     async uploadAudio(file) {
         if (!this.tokenClient) {
             console.log("Simulando subida a Drive del archivo:", file.name);
@@ -90,21 +106,9 @@ class DriveService {
                 }, 1000);
             });
         }
-
-        return new Promise((resolve, reject) => {
-            if (!this.accessToken) {
-                this.tokenClient.callback = (resp) => {
-                    if (resp.error !== undefined) {
-                        reject(resp.error);
-                    }
-                    this.accessToken = resp.access_token;
-                    this.executeUpload(file).then(resolve).catch(reject);
-                };
-                this.tokenClient.requestAccessToken({prompt: 'consent'});
-            } else {
-                this.executeUpload(file).then(resolve).catch(reject);
-            }
-        });
+        
+        await this.ensureAuthenticated();
+        return this.executeUpload(file);
     }
 }
 
