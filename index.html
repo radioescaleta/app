@@ -3,51 +3,217 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Radioescaleta - Tus programas de radio escolares</title>
-    <link rel="stylesheet" href="./css/common.css">
-    <link rel="stylesheet" href="./css/index.css">
-    <!-- FontAwesome para iconos -->
+    <title>Radioescaleta — La herramienta de radio para centros educativos</title>
+    <link rel="stylesheet" href="./css/common.css?v=2">
+    <link rel="stylesheet" href="./css/index.css?v=2">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
 </head>
 <body>
+
+    <!-- CABECERA -->
     <header>
         <div class="logo">
             <i class="fa-solid fa-radio"></i> Radioescaleta
         </div>
-        <div id="userProfile" class="hidden">
+        <div id="userProfile" class="hidden" style="display: flex; align-items: center; gap: 10px;">
+            <span id="userRoleBadge" style="display:none; color:white; padding: 2px 8px; border-radius: 12px; font-size: 12px; font-weight: bold;"></span>
             <span id="userName">Usuario</span>
+            <button id="btnPanelDocente" class="btn btn-secondary" style="display:none; background-color:#1565c0;"><i class="fa-solid fa-chalkboard-user"></i> Panel Docente</button>
+            <button id="btnPanelAdmin" class="btn btn-secondary" style="display:none; background-color:#b71c1c;"><i class="fa-solid fa-shield-halved"></i> Superadmin</button>
             <button id="btnLogout" class="btn btn-secondary">Cerrar Sesión</button>
         </div>
     </header>
 
-    <main class="container">
-        <section id="loginSection" class="hero">
-            <h1>Bienvenido a Radioescaleta</h1>
-            <p>Crea, organiza y lanza tus programas de radio de forma profesional.</p>
-            <br>
-            <button id="btnLogin" class="btn btn-primary"><i class="fa-brands fa-google"></i> Iniciar sesión con Google</button>
-        </section>
+    <main>
 
-        <section id="dashboardSection" class="hidden">
-            <div style="display: flex; justify-content: space-between; align-items: center;">
+        <!-- ===== LANDING ===== -->
+        <div id="loginSection">
+
+            <!-- HERO -->
+            <section class="hero">
+                <h1><i class="fa-solid fa-radio"></i> Radioescaleta</h1>
+                <p class="tagline">
+                    La herramienta profesional de producción radiofónica diseñada para centros educativos.<br>
+                    Crea, ensaya y lanza tu programa de radio desde el navegador.
+                </p>
+                <button id="btnLogin" class="btn-hero">
+                    <i class="fa-brands fa-google"></i> Acceder con Google
+                    <span class="beta-badge">BETA</span>
+                </button>
+                <p class="access-note">
+                    <i class="fa-solid fa-lock"></i> Acceso solo por invitación. Contacta con tu docente para solicitar acceso.
+                </p>
+            </section>
+
+            <!-- QUÉ ES -->
+            <section class="landing-section">
+                <h2>¿Qué es Radioescaleta?</h2>
+                <p class="section-sub">Una app web gratuita pensada desde el primer día para la radio escolar</p>
+                <div class="what-is-box">
+                    Radioescaleta permite a estudiantes y docentes crear <strong>escaletas de radio profesionales</strong> de forma colaborativa.
+                    Organiza los bloques de tu programa (presentaciones, música, efectos, noticias…), calcula tiempos automáticamente,
+                    ensaya en <strong>Modo Directo</strong> con la botonera de audios y graba un <strong>piloto completo</strong> antes de ir al estudio real.
+                    Todo desde el navegador, sin instalar nada.
+                </div>
+            </section>
+
+            <!-- FUNCIONALIDADES -->
+            <section class="features-bg">
+                <div style="max-width:1100px; margin: 0 auto; padding: 0 20px;">
+                    <h2 style="text-align:center; color:#f06292; font-size:1.9em; margin-bottom:8px;">¿Qué puedes hacer?</h2>
+                    <p style="text-align:center; color:#666; margin-bottom:36px;">Todo lo que necesitas para producir un programa de radio de principio a fin</p>
+
+                    <div class="features-grid">
+                        <div class="feature-card" style="--card-color:#f06292;">
+                            <div class="icon"><i class="fa-solid fa-list-ol"></i></div>
+                            <h3>Escaleta profesional</h3>
+                            <p>Crea bloques de texto y audio con tiempos de inicio y fin. Reordénalos arrastrando y el sistema calcula las duraciones automáticamente.</p>
+                        </div>
+                        <div class="feature-card" style="--card-color:#00acc1;">
+                            <div class="icon"><i class="fa-solid fa-stopwatch"></i></div>
+                            <h3>Estimación de lectura</h3>
+                            <p>Escribe el guión y la app calcula cuánto tardarás en leerlo: 130 palabras por minuto, el estándar de locución radiofónica.</p>
+                        </div>
+                        <div class="feature-card" style="--card-color:#f06292;">
+                            <div class="icon"><i class="fa-solid fa-tower-broadcast"></i></div>
+                            <h3>Modo Directo</h3>
+                            <p>El cronómetro resalta en tiempo real qué bloque debería estar sonando. Nunca más te perderás en el guión durante el directo.</p>
+                        </div>
+                        <div class="feature-card" style="--card-color:#00acc1;">
+                            <div class="icon"><i class="fa-solid fa-sliders"></i></div>
+                            <h3>Botonera de audios</h3>
+                            <p>Lanza sintonías, cortinillas y efectos con un clic o con atajos de teclado numérico. Varios sonidos pueden sonar a la vez.</p>
+                        </div>
+                        <div class="feature-card" style="--card-color:#f06292;">
+                            <div class="icon"><i class="fa-solid fa-circle-dot"></i></div>
+                            <h3>Grabación del piloto</h3>
+                            <p>Graba toda la sesión de ensayo (música + efectos + voz) y descárgala como archivo de audio para revisarla antes del directo real.</p>
+                        </div>
+                        <div class="feature-card" style="--card-color:#00acc1;">
+                            <div class="icon"><i class="fa-solid fa-chart-gantt"></i></div>
+                            <h3>Diagrama Gantt</h3>
+                            <p>Visualiza la escaleta como un diagrama temporal. Verás de un vistazo cómo se superponen la música de fondo y los bloques principales.</p>
+                        </div>
+                        <div class="feature-card" style="--card-color:#f06292;">
+                            <div class="icon"><i class="fa-solid fa-volume-high"></i></div>
+                            <h3>Lectura por voz</h3>
+                            <p>Síntesis de voz en castellano integrada. Lee cualquier bloque de texto en voz alta para ensayar sin locutor real.</p>
+                        </div>
+                        <div class="feature-card" style="--card-color:#00acc1;">
+                            <div class="icon"><i class="fa-solid fa-copy"></i></div>
+                            <h3>Plantillas y clonado</h3>
+                            <p>Clona cualquier programa para usarlo como base del siguiente episodio. Conserva audios, cortinillas y tiempos ya configurados.</p>
+                        </div>
+                        <div class="feature-card" style="--card-color:#f06292;">
+                            <div class="icon"><i class="fa-solid fa-chalkboard-user"></i></div>
+                            <h3>Panel docente</h3>
+                            <p>El docente puede ver todos los programas de sus alumnos agrupados por clase y revisarlos en modo lectura para dar feedback.</p>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <!-- PARA QUIÉN -->
+            <section class="landing-section">
+                <h2>¿Para quién es?</h2>
+                <p class="section-sub">Diseñado para toda la comunidad educativa del centro</p>
+                <div class="roles-grid">
+                    <div class="role-card">
+                        <div class="role-icon">🎙️</div>
+                        <h3>Alumnos</h3>
+                        <p>Crea y gestiona tus propios programas de radio. Ensaya con música real, graba el piloto y compártelo con tu docente.</p>
+                    </div>
+                    <div class="role-card">
+                        <div class="role-icon">👩‍🏫</div>
+                        <h3>Docentes</h3>
+                        <p>Invita a tus alumnos por clase y revisa sus guiones y escaletas desde el panel de supervisión.</p>
+                    </div>
+                    <div class="role-card">
+                        <div class="role-icon">🏫</div>
+                        <h3>Centro educativo</h3>
+                        <p>Entorno cerrado y seguro, sin publicidad, sin registro libre. Solo entran los usuarios que tú invites.</p>
+                    </div>
+                </div>
+            </section>
+
+            <!-- CÓMO FUNCIONA -->
+            <section class="features-bg" style="padding: 60px 20px;">
+                <div style="max-width:1100px; margin:0 auto; padding:0 20px;">
+                    <h2 style="text-align:center; color:#f06292; font-size:1.9em; margin-bottom:8px;">¿Cómo funciona?</h2>
+                    <p style="text-align:center; color:#666; margin-bottom:36px;">Del guión en papel al podcast grabado en 5 pasos</p>
+                    <div class="steps">
+                        <div class="step">
+                            <div class="step-number">1</div>
+                            <div class="step-content">
+                                <h3>El docente te invita</h3>
+                                <p>Radioescaleta es beta privada. Tu docente añade tu email y en cuanto lo haga, ya puedes entrar con tu cuenta de Google.</p>
+                            </div>
+                        </div>
+                        <div class="step">
+                            <div class="step-number">2</div>
+                            <div class="step-content">
+                                <h3>Inicias sesión con Google</h3>
+                                <p>Sin contraseñas ni registros. Un clic y entras directamente al dashboard de tus programas.</p>
+                            </div>
+                        </div>
+                        <div class="step">
+                            <div class="step-number">3</div>
+                            <div class="step-content">
+                                <h3>Construyes la escaleta</h3>
+                                <p>Añade bloques de texto con el guión de locución y bloques de audio con sintonías. La app estima los tiempos automáticamente.</p>
+                            </div>
+                        </div>
+                        <div class="step">
+                            <div class="step-number">4</div>
+                            <div class="step-content">
+                                <h3>Ensayas en Modo Directo</h3>
+                                <p>El cronómetro marca qué toca en cada momento. Lanza los audios con la botonera o con el teclado numérico.</p>
+                            </div>
+                        </div>
+                        <div class="step">
+                            <div class="step-number">5</div>
+                            <div class="step-content">
+                                <h3>Grabas el piloto y lo presentas</h3>
+                                <p>Descarga la grabación del ensayo y compártela con tu docente para recibir feedback antes del directo real en el estudio.</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <!-- CTA FINAL -->
+            <section class="cta-final">
+                <h2>¿Tienes acceso?</h2>
+                <p>Si tu docente ya te ha añadido a la plataforma, entra con tu cuenta de Google ahora.</p>
+                <button id="btnLogin2" class="btn-hero">
+                    <i class="fa-brands fa-google"></i> Acceder con Google
+                </button>
+            </section>
+
+        </div>
+        <!-- FIN LANDING -->
+
+
+        <!-- ===== DASHBOARD ===== -->
+        <section id="dashboardSection" class="hidden container">
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-top: 30px;">
                 <h2>Mis Programas</h2>
                 <button id="btnNewProgram" class="btn btn-primary"><i class="fa-solid fa-plus"></i> Nueva Escaleta</button>
             </div>
-            
-            <div class="programs-grid" id="programsList">
-                <!-- Los programas se cargarán aquí dinámicamente -->
-            </div>
+            <div class="programs-grid" id="programsList"></div>
         </section>
+
     </main>
 
-    <!-- Scripts (Módulos JS) -->
-    <script type="module" src="./js/index.js?v=2"></script>
-    <footer style="text-align: center; padding: 20px; background: white; border-top: 1px solid #ddd; margin-top: 50px;">
+    <footer style="text-align: center; padding: 20px; background: white; border-top: 1px solid #ddd; margin-top: 0;">
         <p><a href="privacidad.html" style="color: var(--secondary-color);">Política de Privacidad</a> | <a href="terminos.html" style="color: var(--secondary-color);">Términos de Uso</a></p>
         <p style="margin-top: 10px; font-size: 0.9em; color: #666;">
-            <a rel="license" href="http://creativecommons.org/licenses/by-nc-sa/4.0/"><img alt="Licencia de Creative Commons" style="border-width:0; vertical-align: middle; margin-right: 5px;" src="https://i.creativecommons.org/l/by-nc-sa/4.0/88x31.png" /></a><br />Este obra está bajo una <a rel="license" href="http://creativecommons.org/licenses/by-nc-sa/4.0/" style="color: #666;">licencia de Creative Commons Reconocimiento-NoComercial-CompartirIgual 4.0 Internacional</a>.
+            <a rel="license" href="http://creativecommons.org/licenses/by-nc-sa/4.0/"><img alt="Licencia de Creative Commons" style="border-width:0; vertical-align: middle; margin-right: 5px;" src="https://i.creativecommons.org/l/by-nc-sa/4.0/88x31.png" /></a>
+            Este obra está bajo una <a rel="license" href="http://creativecommons.org/licenses/by-nc-sa/4.0/" style="color: #666;">licencia de Creative Commons Reconocimiento-NoComercial-CompartirIgual 4.0 Internacional</a>.
         </p>
     </footer>
+
+    <script type="module" src="./js/index.js?v=4"></script>
 </body>
 </html>

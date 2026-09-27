@@ -1,6 +1,6 @@
 // js/index.js
-import { authService } from './services/authService.js';
-import { dbService } from './services/dbService.js';
+import { authService } from './services/authService.js?v=2';
+import { dbService } from './services/dbService.js?v=4';
 
 document.addEventListener('DOMContentLoaded', () => {
     const btnLogin = document.getElementById('btnLogin');
@@ -11,33 +11,82 @@ document.addEventListener('DOMContentLoaded', () => {
     const dashboardSection = document.getElementById('dashboardSection');
     const userProfile = document.getElementById('userProfile');
     const userName = document.getElementById('userName');
+    const userRoleBadge = document.getElementById('userRoleBadge');
     const programsList = document.getElementById('programsList');
+    const btnPanelDocente = document.getElementById('btnPanelDocente');
+    const btnPanelAdmin = document.getElementById('btnPanelAdmin');
 
     authService.onAuthStateChanged(async (user) => {
         if (user) {
-            // Usuario logueado
-            loginSection.classList.add('hidden');
-            dashboardSection.classList.remove('hidden');
-            userProfile.classList.remove('hidden');
-            userName.innerText = user.displayName || user.email || "Usuario";
-            await dbService.saveUser(user);
-            loadPrograms(user.uid);
+            try {
+                // Verificar si el usuario está invitado y obtener su perfil
+                const profile = await dbService.loginUser(user);
+                
+                loginSection.classList.add('hidden');
+                dashboardSection.classList.remove('hidden');
+                userProfile.classList.remove('hidden');
+                userName.innerText = profile.displayName || user.email;
+
+                // Mostrar badge de rol
+                if (userRoleBadge) {
+                    const roleLabels = {
+                        superadmin: { label: 'Superadmin', color: '#b71c1c' },
+                        docente: { label: 'Docente', color: '#1565c0' },
+                        alumno: { label: profile.clase || 'Alumno', color: '#2e7d32' }
+                    };
+                    const roleInfo = roleLabels[profile.role] || roleLabels.alumno;
+                    userRoleBadge.textContent = roleInfo.label;
+                    userRoleBadge.style.backgroundColor = roleInfo.color;
+                    userRoleBadge.style.display = 'inline-block';
+                }
+
+                // Mostrar botones de panel según rol
+                if (profile.role === 'superadmin' && btnPanelAdmin) {
+                    btnPanelAdmin.style.display = 'inline-block';
+                }
+                if ((profile.role === 'docente' || profile.role === 'superadmin') && btnPanelDocente) {
+                    btnPanelDocente.style.display = 'inline-block';
+                }
+                
+                // Guardar perfil en sessionStorage para usar en otras páginas
+                sessionStorage.setItem('userProfile', JSON.stringify(profile));
+
+                loadPrograms(user.uid);
+            } catch (err) {
+                if (err.message === 'ACCESO_DENEGADO') {
+                    await authService.logout();
+                    Swal.fire({
+                        title: '🔒 Acceso Restringido',
+                        html: `<p>Esta es una versión <b>beta privada</b> de Radioescaleta.</p>
+                               <p>Tu cuenta <b>${user.email}</b> no está en la lista de usuarios invitados.</p>
+                               <p>Si crees que debería tener acceso, contacta con el administrador.</p>`,
+                        icon: 'warning',
+                        confirmButtonText: 'Entendido'
+                    });
+                } else {
+                    console.error(err);
+                    await authService.logout();
+                    Swal.fire("Error", "Error verificando tu cuenta: " + err.message, "error");
+                }
+            }
         } else {
-            // No logueado
             loginSection.classList.remove('hidden');
             dashboardSection.classList.add('hidden');
             userProfile.classList.add('hidden');
+            sessionStorage.removeItem('userProfile');
         }
     });
 
+    const btnLogin2 = document.getElementById('btnLogin2');
+    if (btnLogin2) {
+        btnLogin2.addEventListener('click', async () => {
+            try { await authService.login(); } catch (error) { Swal.fire("Error", "Error al iniciar sesión", "error"); }
+        });
+    }
+
     btnLogin.addEventListener('click', async () => {
         try {
-            const user = await authService.login();
-            // Si es demo, guardamos
-            if (user && user.uid === "demo123") {
-                localStorage.setItem("demoUser", JSON.stringify(user));
-                window.location.reload();
-            }
+            await authService.login();
         } catch (error) {
             Swal.fire("Error", "Error al iniciar sesión", "error");
         }
@@ -45,14 +94,25 @@ document.addEventListener('DOMContentLoaded', () => {
 
     btnLogout.addEventListener('click', async () => {
         await authService.logout();
-        localStorage.removeItem("demoUser");
+        sessionStorage.removeItem('userProfile');
         window.location.reload();
     });
 
     btnNewProgram.addEventListener('click', () => {
-        // Redirigir al editor para un programa nuevo
         window.location.href = 'editor.html';
     });
+
+    if (btnPanelDocente) {
+        btnPanelDocente.addEventListener('click', () => {
+            window.location.href = 'docente.html';
+        });
+    }
+
+    if (btnPanelAdmin) {
+        btnPanelAdmin.addEventListener('click', () => {
+            window.location.href = 'admin.html';
+        });
+    }
 
     async function loadPrograms(userId) {
         programsList.innerHTML = '<p>Cargando programas...</p>';
@@ -69,7 +129,6 @@ document.addEventListener('DOMContentLoaded', () => {
             card.className = 'program-card';
             
             const date = new Date(program.createdAt).toLocaleDateString();
-            
             const isOwner = program.ownerId === userId;
             const badge = program.shared ? '<span style="background: #9c27b0; color: white; padding: 2px 5px; border-radius: 3px; font-size: 12px; float: right;">Compartido</span>' : '';
             
@@ -85,7 +144,6 @@ document.addEventListener('DOMContentLoaded', () => {
             programsList.appendChild(card);
         });
 
-        
         // Eventos para botones de clonar
         document.querySelectorAll('.btn-clone').forEach(btn => {
             btn.addEventListener('click', async (e) => {
@@ -104,28 +162,19 @@ document.addEventListener('DOMContentLoaded', () => {
                 if (result.isConfirmed) {
                     btnEl.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i>';
                     btnEl.disabled = true;
-                    
                     try {
-                        // 1. Obtener datos originales
                         const data = await dbService.getProgramById(programId);
-                        
-                        // 2. Preparar copia
-                        delete data.id; // Para que Firebase cree uno nuevo
+                        delete data.id;
                         data.title = data.title + " (Copia)";
-                        data.ownerId = userId; // El dueño de la copia es el usuario actual
-                        data.collaborators = {}; // No se copian los colaboradores
+                        data.ownerId = userId;
+                        data.collaborators = {};
                         data.createdAt = new Date().toISOString();
-                        
-                        // 3. Renovar IDs de los bloques para evitar colisiones internas
                         if (data.blocks) {
                             data.blocks.forEach(b => {
                                 b.id = 'block_' + Date.now() + Math.random().toString(36).substr(2, 9);
                             });
                         }
-                        
-                        // 4. Guardar
                         await dbService.saveProgram(data);
-                        
                         Swal.fire({toast: true, position: 'bottom', icon: 'success', title: '¡Programa clonado!', showConfirmButton: false, timer: 3000});
                         loadPrograms(userId);
                     } catch (err) {
@@ -142,7 +191,7 @@ document.addEventListener('DOMContentLoaded', () => {
         document.querySelectorAll('.btn-delete').forEach(btn => {
             btn.addEventListener('click', async (e) => {
                 const btnEl = e.currentTarget;
-                                const result = await Swal.fire({
+                const result = await Swal.fire({
                     title: '¿Borrar programa?',
                     text: "Esta acción no se puede deshacer.",
                     icon: 'warning',

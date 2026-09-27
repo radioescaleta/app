@@ -1,7 +1,6 @@
 // js/editor.js
-import { authService } from './services/authService.js';
-import { dbService } from './services/dbService.js';
-import { driveService } from './services/driveService.js';
+import { authService } from './services/authService.js?v=2';
+import { dbService } from './services/dbService.js?v=4';
 import { Program } from './models/Program.js';
 import { EscaletaUI } from './components/EscaletaUI.js';
 import { AudioBoard } from './components/AudioBoard.js';
@@ -40,8 +39,6 @@ document.addEventListener('DOMContentLoaded', async () => {
 });
 
 async function initEditor(user) {
-    driveService.init();
-
     // 2. Inicializar Componentes
     audioBoard = new AudioBoard('audioBoard');
     const ganttUI = new GanttUI('ganttContainer');
@@ -152,6 +149,31 @@ async function initEditor(user) {
             Swal.fire("Grabación cancelada", "No se pudo iniciar la captura de audio.", "warning");
         }
     });
+
+
+    // === MODO SÓLO LECTURA (Docente revisando el programa de un alumno) ===
+    const urlParams = new URLSearchParams(window.location.search);
+    const isReadOnly = urlParams.get('readonly') === '1';
+
+    if (isReadOnly) {
+        document.title = '👁️ Revisión — ' + document.title;
+
+        // Banner aviso
+        const banner = document.createElement('div');
+        banner.style.cssText = 'background:#1565c0; color:white; text-align:center; padding:8px; font-size:14px; font-weight:bold;';
+        banner.innerHTML = '<i class="fa-solid fa-eye"></i> Modo Supervisión (sólo lectura) — No puedes editar ni guardar este programa.';
+        document.body.insertBefore(banner, document.body.firstChild);
+
+        // Ocultar botones de edición
+        const editBtns = ['btnSave', 'btnAddText', 'btnAddAudio', 'btnUploadDrive', 'btnLiveMode', 'btnShare', 'btnRecordPodcast'];
+        editBtns.forEach(id => {
+            const el = document.getElementById(id);
+            if (el) el.style.display = 'none';
+        });
+
+        // Deshabilitar auto-save apagando la callback
+        escaletaUI.onUpdateCallback = null;
+    }
 
     // Controles de Vistas
     const btnViewList = document.getElementById('btnViewList');
@@ -337,36 +359,28 @@ async function initEditor(user) {
         });
     });
 
-    // Subir a Drive
+    // Subir a Firebase Storage
     document.getElementById('btnUploadDrive').addEventListener('click', async () => {
-        try {
-            await driveService.ensureAuthenticated();
-        } catch(err) {
-            Swal.fire("Error", "No se concedieron permisos de Google Drive o el navegador bloqueó la ventana.", "error");
-            return;
-        }
-
-        // Creamos un input de archivo invisible para seleccionar el audio local
         const fileInput = document.createElement('input');
         fileInput.type = 'file';
         fileInput.accept = 'audio/*';
         fileInput.onchange = async (e) => {
             if (e.target.files.length > 0) {
                 const file = e.target.files[0];
+                const btn = document.getElementById('btnUploadDrive');
                 try {
-                    // Muestra algo visual
-                    const btn = document.getElementById('btnUploadDrive');
                     btn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> Subiendo...';
                     
-                    const result = await driveService.uploadAudio(file);
+                    // Usamos Firebase Storage en lugar de Drive
+                    const result = await cloudinaryService.uploadAudio(file);
                     
-                    // Añadimos a la escaleta (como efecto por defecto, podría elegirse)
                     window.addAudioWithTimeCalculation(file.name, result.url, 'efectos');
                     
                     btn.innerHTML = '<i class="fa-solid fa-cloud-arrow-up"></i> Subir';
                 } catch (err) {
-                    Swal.fire("Error", "Error subiendo el archivo: " + err, "error");
-                    document.getElementById('btnUploadDrive').innerHTML = '<i class="fa-solid fa-cloud-arrow-up"></i> Subir';
+                    console.error(err);
+                    Swal.fire("Error", "Asegúrate de que Firebase Storage está habilitado en tu consola de Firebase.\n" + err.message, "error");
+                    btn.innerHTML = '<i class="fa-solid fa-cloud-arrow-up"></i> Subir';
                 }
             }
         };

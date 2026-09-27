@@ -27,4 +27,4 @@ if (firebaseConfig.apiKey !== "API_KEY") {
     console.warn("⚠️ Firebase no está configurado. La app funcionará en modo de demostración (local).");
 }
 
-export { auth, db, provider };
+export { app, auth, db, provider };

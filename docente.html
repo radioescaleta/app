@@ -1,0 +1,77 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Panel Docente — Radioescaleta</title>
+    <link rel="stylesheet" href="./css/common.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+    <style>
+        .panel-container { max-width: 900px; margin: 40px auto; padding: 0 20px; }
+        .panel-card { background: white; border-radius: 12px; padding: 30px; box-shadow: 0 2px 10px rgba(0,0,0,0.08); margin-bottom: 30px; }
+        .panel-card h2 { margin-top: 0; color: #1565c0; display: flex; align-items: center; gap: 10px; }
+        .form-row { display: flex; gap: 10px; flex-wrap: wrap; margin-bottom: 15px; }
+        .form-row input { flex: 1; min-width: 160px; padding: 10px; border: 1px solid #ddd; border-radius: 8px; font-size: 14px; }
+        .alumno-list { list-style: none; padding: 0; margin: 0; }
+        .alumno-item { border: 1px solid #e0e0e0; border-radius: 10px; margin-bottom: 10px; overflow: hidden; }
+        .alumno-header { display: flex; align-items: center; gap: 10px; padding: 14px 16px; cursor: pointer; background: #f8f9fa; transition: background 0.2s; }
+        .alumno-header:hover { background: #e3f2fd; }
+        .alumno-info { flex: 1; }
+        .alumno-info .name { font-weight: bold; font-size: 15px; }
+        .alumno-info .detail { font-size: 12px; color: #888; }
+        .alumno-programs { display: none; padding: 10px 16px 16px; background: white; border-top: 1px solid #e0e0e0; }
+        .alumno-programs.open { display: block; }
+        .program-item { display: flex; align-items: center; gap: 10px; padding: 8px; border-radius: 8px; margin-bottom: 6px; background: #f5f5f5; }
+        .program-item .prog-title { flex: 1; font-size: 14px; }
+        .badge { display: inline-block; padding: 2px 8px; border-radius: 12px; font-size: 11px; font-weight: bold; color: white; }
+        .badge-clase { background: #2e7d32; }
+        .badge-no-login { background: #ff9800; }
+        .centro-info { background: #e3f2fd; border-radius: 8px; padding: 10px 16px; margin-bottom: 20px; font-size: 14px; }
+    </style>
+</head>
+<body>
+    <header>
+        <div class="logo">
+            <a href="index.html" style="color: inherit; text-decoration: none;">
+                <i class="fa-solid fa-arrow-left"></i> <i class="fa-solid fa-radio"></i> Radioescaleta
+            </a>
+        </div>
+        <div>
+            <span id="userName" style="font-weight: bold;"></span>
+            <span style="background:#1565c0; color:white; padding:2px 8px; border-radius:12px; font-size:12px; margin-left:8px;">Docente</span>
+        </div>
+    </header>
+
+    <div class="panel-container">
+        <div class="panel-card">
+            <h2><i class="fa-solid fa-user-plus"></i> Invitar Alumno</h2>
+            <div class="centro-info" id="centroInfo">
+                <i class="fa-solid fa-school"></i> Centro: <b id="centroNombre">Cargando...</b>
+            </div>
+            <div class="form-row">
+                <input type="email" id="alumnoEmail" placeholder="Email del alumno" />
+                <input type="text" id="alumnoNombre" placeholder="Nombre (opcional)" />
+                <input type="text" id="alumnoClase" placeholder="Clase (ej: 3º ESO B)" />
+            </div>
+            <div style="display: flex; gap: 10px; flex-wrap: wrap;">
+                <button class="btn btn-primary" id="btnInviteAlumno">
+                    <i class="fa-solid fa-paper-plane"></i> Invitar Alumno
+                </button>
+                <button class="btn" id="btnImportClassroom" style="background:#fbbc04; color:#333;">
+                    <i class="fa-brands fa-google"></i> Importar desde Google Classroom
+                </button>
+            </div>
+        </div>
+
+        <div class="panel-card">
+            <h2><i class="fa-solid fa-users-rectangle"></i> Mis Alumnos</h2>
+            <ul class="alumno-list" id="alumnosList">
+                <li style="padding:10px; color:#888;"><i class="fa-solid fa-spinner fa-spin"></i> Cargando alumnos...</li>
+            </ul>
+        </div>
+    </div>
+
+    <script type="module" src="./js/docente.js?v=3"></script>
+</body>
+</html>
