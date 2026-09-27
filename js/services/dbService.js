@@ -293,6 +293,81 @@ class DbService {
             return null;
         }
     }
+
+    // =============================
+    // LIBRERÍA DE SONIDOS
+    // =============================
+
+    async getSoundLibrary() {
+        if (!db) return [];
+        try {
+            const snap = await getDocs(collection(db, "sounds"));
+            return snap.docs.map(d => ({ docId: d.id, ...d.data() }));
+        } catch (e) {
+            console.error("Error obteniendo librería de sonidos:", e);
+            return [];
+        }
+    }
+
+    async addSound(soundData) {
+        // soundData: { title, url, category, icon, order }
+        if (!db) return null;
+        try {
+            const ref = await addDoc(collection(db, "sounds"), {
+                ...soundData,
+                createdAt: new Date().toISOString()
+            });
+            return ref.id;
+        } catch (e) {
+            console.error("Error añadiendo sonido:", e);
+            throw e;
+        }
+    }
+
+    async updateSound(docId, fields) {
+        if (!db) return;
+        try {
+            await updateDoc(doc(db, "sounds", docId), fields);
+        } catch (e) {
+            console.error("Error actualizando sonido:", e);
+            throw e;
+        }
+    }
+
+    async deleteSound(docId) {
+        if (!db) return;
+        try {
+            await deleteDoc(doc(db, "sounds", docId));
+        } catch (e) {
+            console.error("Error borrando sonido:", e);
+            throw e;
+        }
+    }
+
+    async initDefaultSounds(defaultLibrary) {
+        // Seeds Firestore with the local defaults if collection is empty
+        if (!db) return;
+        const existing = await this.getSoundLibrary();
+        if (existing.length > 0) return; // already seeded
+
+        let order = 0;
+        for (const [category, items] of Object.entries(defaultLibrary)) {
+            for (const item of items) {
+                await this.addSound({
+                    title: item.title,
+                    url: item.url,
+                    category,
+                    icon: item.icon || categoryDefaultIcon(category),
+                    order: order++
+                });
+            }
+        }
+    }
+}
+
+function categoryDefaultIcon(cat) {
+    const icons = { sintonias: 'fa-music', efectos: 'fa-burst', musica: 'fa-headphones' };
+    return icons[cat] || 'fa-music';
 }
 
 export const dbService = new DbService();

@@ -1,0 +1,440 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Gestión de Sonidos — Radioescaleta</title>
+    <link rel="stylesheet" href="./css/common.css?v=3">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+    <style>
+        body { background: #f5f5f5; }
+        .page-header {
+            background: linear-gradient(135deg, #f06292, #e91e63);
+            color: white;
+            padding: 20px 30px;
+            display: flex;
+            align-items: center;
+            gap: 15px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.15);
+        }
+        .page-header h1 { margin: 0; font-size: 22px; }
+        .page-header .back-link { color: white; text-decoration: none; font-size: 20px; opacity: 0.85; }
+        .page-header .back-link:hover { opacity: 1; }
+        .toolbar {
+            background: white;
+            border-bottom: 1px solid #e0e0e0;
+            padding: 12px 30px;
+            display: flex;
+            gap: 10px;
+            align-items: center;
+        }
+        .toolbar .spacer { flex: 1; }
+        .tabs {
+            display: flex;
+            background: white;
+            border-bottom: 2px solid #e0e0e0;
+            padding: 0 30px;
+        }
+        .tab-btn {
+            padding: 12px 24px;
+            border: none;
+            background: none;
+            cursor: pointer;
+            font-size: 15px;
+            font-weight: bold;
+            color: #777;
+            border-bottom: 3px solid transparent;
+            margin-bottom: -2px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            transition: all 0.2s;
+        }
+        .tab-btn:hover { color: #f06292; }
+        .tab-btn.active { color: #f06292; border-bottom-color: #f06292; }
+        .tab-badge {
+            background: #bbb;
+            color: white;
+            border-radius: 10px;
+            font-size: 11px;
+            padding: 1px 7px;
+            font-weight: bold;
+        }
+        .tab-btn.active .tab-badge { background: #f06292; }
+        .content { padding: 24px 30px; max-width: 1100px; margin: 0 auto; }
+        .sounds-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
+            gap: 16px;
+        }
+        .sound-card {
+            background: white;
+            border-radius: 12px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.08);
+            padding: 16px;
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+            border: 2px solid transparent;
+            transition: all 0.2s;
+        }
+        .sound-card:hover { border-color: #f06292; box-shadow: 0 4px 12px rgba(240,98,146,0.2); }
+        .sound-card-top { display: flex; align-items: center; gap: 12px; }
+        .sound-icon {
+            width: 48px; height: 48px;
+            border-radius: 10px;
+            display: flex; align-items: center; justify-content: center;
+            font-size: 20px; color: white; flex-shrink: 0;
+        }
+        .sound-icon.efectos   { background: linear-gradient(135deg, #ff9800, #f57c00); }
+        .sound-icon.sintonias { background: linear-gradient(135deg, #f06292, #e91e63); }
+        .sound-icon.musica    { background: linear-gradient(135deg, #00acc1, #00838f); }
+        .sound-info { flex: 1; min-width: 0; }
+        .sound-title { font-weight: bold; font-size: 14px; color: #333; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+        .sound-url { font-size: 11px; color: #aaa; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+        .sound-actions { display: flex; gap: 6px; justify-content: flex-end; }
+        .btn-icon {
+            border: none; border-radius: 8px; padding: 6px 10px;
+            cursor: pointer; font-size: 13px; display: flex; align-items: center; gap: 5px; transition: all 0.2s;
+        }
+        .btn-play   { background: #e3f2fd; color: #1565c0; }
+        .btn-play:hover { background: #1565c0; color: white; }
+        .btn-edit   { background: #f3e5f5; color: #7b1fa2; }
+        .btn-edit:hover { background: #7b1fa2; color: white; }
+        .btn-delete { background: #ffebee; color: #c62828; }
+        .btn-delete:hover { background: #c62828; color: white; }
+        .upload-zone {
+            background: white;
+            border: 2px dashed #f06292;
+            border-radius: 12px;
+            padding: 30px;
+            text-align: center;
+            cursor: pointer;
+            margin-bottom: 24px;
+            transition: all 0.2s;
+            color: #f06292;
+        }
+        .upload-zone:hover, .upload-zone.dragover { background: #fce4ec; border-color: #e91e63; }
+        .upload-zone i { font-size: 36px; margin-bottom: 10px; display: block; }
+        .upload-zone p { margin: 5px 0; }
+        .upload-zone .hint { font-size: 13px; color: #aaa; }
+        .icon-picker {
+            display: grid;
+            grid-template-columns: repeat(8, 1fr);
+            gap: 6px;
+            max-height: 200px;
+            overflow-y: auto;
+            padding: 4px;
+        }
+        .icon-option {
+            aspect-ratio: 1;
+            border: 2px solid #eee;
+            border-radius: 8px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            font-size: 18px;
+            transition: all 0.15s;
+        }
+        .icon-option:hover { border-color: #f06292; background: #fce4ec; }
+        .icon-option.selected { border-color: #f06292; background: #f06292; color: white; }
+        .empty-state { text-align: center; padding: 60px 20px; color: #bbb; grid-column: 1/-1; }
+        .empty-state i { font-size: 48px; margin-bottom: 15px; display: block; }
+    </style>
+</head>
+<body>
+<div class="page-header">
+    <a href="admin.html" class="back-link"><i class="fa-solid fa-arrow-left"></i></a>
+    <i class="fa-solid fa-music"></i>
+    <h1>Librería de Sonidos</h1>
+</div>
+
+<div class="toolbar">
+    <button class="btn btn-secondary" id="btnSeedDefaults">
+        <i class="fa-solid fa-database"></i> Inicializar desde archivos locales
+    </button>
+    <div class="spacer"></div>
+    <span id="totalCount" style="color:#888; font-size:14px;"></span>
+</div>
+
+<div class="tabs">
+    <button class="tab-btn active" data-cat="efectos">
+        <i class="fa-solid fa-burst"></i> Efectos <span class="tab-badge" id="badge-efectos">0</span>
+    </button>
+    <button class="tab-btn" data-cat="sintonias">
+        <i class="fa-solid fa-music"></i> Sintonías <span class="tab-badge" id="badge-sintonias">0</span>
+    </button>
+    <button class="tab-btn" data-cat="musica">
+        <i class="fa-solid fa-headphones"></i> Música de Fondo <span class="tab-badge" id="badge-musica">0</span>
+    </button>
+</div>
+
+<div class="content">
+    <div class="upload-zone" id="uploadZone">
+        <input type="file" id="fileInput" accept="audio/*" multiple style="display:none;">
+        <i class="fa-solid fa-cloud-arrow-up"></i>
+        <p><strong>Suelta archivos de audio aquí</strong> o haz clic para seleccionar</p>
+        <p class="hint">MP3, WAV, OGG — Se subirán a Cloudinary automáticamente</p>
+        <div id="uploadStatus" style="display:none; margin-top:10px; font-size:13px; color:#f06292;"></div>
+    </div>
+    <div class="sounds-grid" id="soundsGrid">
+        <div class="empty-state"><i class="fa-solid fa-spinner fa-spin"></i><p>Cargando...</p></div>
+    </div>
+</div>
+
+<script type="module">
+import { authService }     from './js/services/authService.js?v=2';
+import { dbService }       from './js/services/dbService.js?v=5';
+import { cloudinaryService } from './js/services/cloudinaryService.js';
+
+const SUPERADMIN_EMAIL = 'bernat13@gmail.com';
+
+const defaultLibrary = {
+    sintonias: [
+        { title: "Sintonía Inicio",    url: "./assets/sounds/sintonias/sintonia-inicio.wav",   icon: "fa-play" },
+        { title: "Sintonía Noticias",  url: "./assets/sounds/sintonias/sintonia-noticias.wav", icon: "fa-newspaper" },
+        { title: "Final de Programa",  url: "./assets/sounds/sintonias/final-programa.wav",    icon: "fa-flag-checkered" },
+        { title: "Jingle Victoria",    url: "./assets/sounds/sintonias/jingle-correcto.wav",   icon: "fa-trophy" }
+    ],
+    efectos: [
+        { title: "Aplausos",          url: "./assets/sounds/efectos/aplausos.wav",           icon: "fa-hands-clapping" },
+        { title: "Risas",             url: "./assets/sounds/efectos/risas.wav",              icon: "fa-face-laugh" },
+        { title: "Bocina",            url: "./assets/sounds/efectos/bocina.wav",             icon: "fa-bullhorn" },
+        { title: "Buzzer Fallo",      url: "./assets/sounds/efectos/buzzer-fallo.wav",       icon: "fa-xmark" },
+        { title: "Campana Victoria",  url: "./assets/sounds/efectos/campana-victoria.wav",   icon: "fa-bell" },
+        { title: "Redoble de Tambor", url: "./assets/sounds/efectos/redoble.wav",            icon: "fa-drum" },
+        { title: "Silbato",           url: "./assets/sounds/efectos/silbato.wav",            icon: "fa-whistle" },
+        { title: "Sonido Correcto",   url: "./assets/sounds/efectos/sonido-correcto.wav",    icon: "fa-check" },
+        { title: "Boing",             url: "./assets/sounds/efectos/boing.wav",              icon: "fa-circle" },
+        { title: "Grillos",           url: "./assets/sounds/efectos/grillos.wav",            icon: "fa-bug" },
+        { title: "Cuernos Game Show", url: "./assets/sounds/efectos/cuernos-game-show.wav",  icon: "fa-star" },
+        { title: "Trombón Triste",    url: "./assets/sounds/efectos/tromb\u00f3n-triste.wav",icon: "fa-face-sad-tear" }
+    ],
+    musica: [
+        { title: "Fondo Lounge",      url: "./assets/sounds/musica/fondo-lounge.wav",       icon: "fa-martini-glass" },
+        { title: "Fondo Positivo",    url: "./assets/sounds/musica/fondo-positivo.wav",     icon: "fa-sun" },
+        { title: "Fondo Dramático",   url: "./assets/sounds/musica/fondo-dramatico.wav",    icon: "fa-cloud-bolt" },
+        { title: "Fondo Alegre",      url: "./assets/sounds/musica/fondo-alegre.wav",       icon: "fa-face-smile-beam" }
+    ]
+};
+
+const ICON_LIST = [
+    'fa-music','fa-headphones','fa-drum','fa-guitar','fa-microphone','fa-microphone-lines',
+    'fa-bell','fa-bullhorn','fa-burst','fa-star','fa-heart','fa-hands-clapping',
+    'fa-face-laugh','fa-face-sad-tear','fa-face-smile-beam','fa-face-surprise',
+    'fa-xmark','fa-check','fa-flag-checkered','fa-trophy','fa-crown','fa-newspaper',
+    'fa-radio','fa-play','fa-sun','fa-cloud-bolt','fa-martini-glass','fa-bug',
+    'fa-whistle','fa-circle','fa-bolt','fa-fire','fa-wave-square','fa-volume-high',
+    'fa-record-vinyl','fa-clover','fa-wand-magic-sparkles','fa-rocket','fa-bomb'
+];
+
+let allSounds = [];
+let currentCat = 'efectos';
+let currentAudio = null;
+
+authService.onAuthStateChanged(async (user) => {
+    if (!user || user.email !== SUPERADMIN_EMAIL) {
+        window.location.href = 'index.html'; return;
+    }
+    await loadSounds();
+});
+
+async function loadSounds() {
+    allSounds = await dbService.getSoundLibrary();
+    renderGrid();
+    updateBadges();
+}
+
+function updateBadges() {
+    ['efectos','sintonias','musica'].forEach(cat => {
+        document.getElementById('badge-' + cat).textContent =
+            allSounds.filter(s => s.category === cat).length;
+    });
+    document.getElementById('totalCount').textContent = allSounds.length + ' sonidos en total';
+}
+
+function renderGrid() {
+    const grid = document.getElementById('soundsGrid');
+    const items = allSounds.filter(s => s.category === currentCat)
+                           .sort((a,b) => (a.order||0)-(b.order||0));
+    if (!items.length) {
+        grid.innerHTML = '<div class="empty-state"><i class="fa-solid fa-music"></i><p>No hay sonidos en esta categoría.<br>Sube archivos o inicializa los predeterminados.</p></div>';
+        return;
+    }
+    grid.innerHTML = items.map(s => {
+        const fname = s.url.split('/').pop().split('?')[0];
+        return `<div class="sound-card">
+            <div class="sound-card-top">
+                <div class="sound-icon ${s.category}"><i class="fa-solid ${s.icon||'fa-music'}"></i></div>
+                <div class="sound-info">
+                    <div class="sound-title" title="${s.title}">${s.title}</div>
+                    <div class="sound-url" title="${s.url}">${fname}</div>
+                </div>
+            </div>
+            <div class="sound-actions">
+                <button class="btn-icon btn-play"   data-url="${s.url}"><i class="fa-solid fa-play"></i></button>
+                <button class="btn-icon btn-edit"   data-id="${s.docId}"><i class="fa-solid fa-pen"></i> Editar</button>
+                <button class="btn-icon btn-delete" data-id="${s.docId}" data-title="${s.title.replace(/"/g,'&quot;')}"><i class="fa-solid fa-trash"></i></button>
+            </div>
+        </div>`;
+    }).join('');
+
+    grid.querySelectorAll('.btn-play').forEach(b =>
+        b.addEventListener('click', () => {
+            if (currentAudio) currentAudio.pause();
+            currentAudio = new Audio(b.dataset.url);
+            currentAudio.play();
+        })
+    );
+    grid.querySelectorAll('.btn-edit').forEach(b =>
+        b.addEventListener('click', () => editSound(b.dataset.id))
+    );
+    grid.querySelectorAll('.btn-delete').forEach(b =>
+        b.addEventListener('click', () => deleteSound(b.dataset.id, b.dataset.title))
+    );
+}
+
+// TABS
+document.querySelectorAll('.tab-btn').forEach(btn => {
+    btn.addEventListener('click', () => {
+        document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+        btn.classList.add('active');
+        currentCat = btn.dataset.cat;
+        renderGrid();
+    });
+});
+
+// EDIT
+function editSound(docId) {
+    const sound = allSounds.find(s => s.docId === docId);
+    if (!sound) return;
+    Swal.fire({
+        title: 'Editar Sonido',
+        width: '540px',
+        html: `<div style="text-align:left;display:flex;flex-direction:column;gap:12px;">
+            <div>
+                <label style="font-size:13px;font-weight:bold;color:#555;">Nombre</label>
+                <input id="editTitle" class="swal2-input" style="margin:4px 0 0;width:100%;" value="${sound.title}">
+            </div>
+            <div>
+                <label style="font-size:13px;font-weight:bold;color:#555;">Categoría</label>
+                <select id="editCat" class="swal2-select" style="display:block;width:100%;margin:4px 0 0;font-size:14px;">
+                    <option value="efectos"   ${sound.category==='efectos'?'selected':''}>🔊 Efectos</option>
+                    <option value="sintonias" ${sound.category==='sintonias'?'selected':''}>🎵 Sintonías</option>
+                    <option value="musica"    ${sound.category==='musica'?'selected':''}>🎶 Música de Fondo</option>
+                </select>
+            </div>
+            <div>
+                <label style="font-size:13px;font-weight:bold;color:#555;">Icono</label>
+                <div class="icon-picker" id="iconPicker" style="margin-top:4px;">
+                    ${ICON_LIST.map(ico => `<div class="icon-option ${ico===sound.icon?'selected':''}" data-icon="${ico}"><i class="fa-solid ${ico}"></i></div>`).join('')}
+                </div>
+            </div>
+            <div>
+                <label style="font-size:13px;font-weight:bold;color:#555;">URL del audio</label>
+                <input id="editUrl" class="swal2-input" style="margin:4px 0 0;width:100%;font-size:12px;" value="${sound.url}">
+            </div>
+        </div>`,
+        showCancelButton: true,
+        confirmButtonText: 'Guardar',
+        cancelButtonText: 'Cancelar',
+        didOpen: () => {
+            document.querySelectorAll('.icon-option').forEach(el => {
+                el.addEventListener('click', () => {
+                    document.querySelectorAll('.icon-option').forEach(o => o.classList.remove('selected'));
+                    el.classList.add('selected');
+                });
+            });
+        },
+        preConfirm: () => {
+            const sel = document.querySelector('.icon-option.selected');
+            return {
+                title: document.getElementById('editTitle').value.trim(),
+                category: document.getElementById('editCat').value,
+                icon: sel ? sel.dataset.icon : sound.icon,
+                url: document.getElementById('editUrl').value.trim()
+            };
+        }
+    }).then(async r => {
+        if (!r.isConfirmed) return;
+        await dbService.updateSound(docId, r.value);
+        const idx = allSounds.findIndex(s => s.docId === docId);
+        if (idx !== -1) allSounds[idx] = { ...allSounds[idx], ...r.value };
+        renderGrid(); updateBadges();
+    });
+}
+
+// DELETE
+async function deleteSound(docId, title) {
+    const r = await Swal.fire({
+        title: `¿Eliminar "${title}"?`,
+        text: 'Esta acción no se puede deshacer.',
+        icon: 'warning',
+        showCancelButton: true,
+        confirmButtonText: 'Sí, eliminar',
+        confirmButtonColor: '#c62828',
+        cancelButtonText: 'Cancelar'
+    });
+    if (!r.isConfirmed) return;
+    await dbService.deleteSound(docId);
+    allSounds = allSounds.filter(s => s.docId !== docId);
+    renderGrid(); updateBadges();
+}
+
+// UPLOAD
+const uploadZone = document.getElementById('uploadZone');
+const fileInput  = document.getElementById('fileInput');
+const uploadStatus = document.getElementById('uploadStatus');
+
+uploadZone.addEventListener('click', () => fileInput.click());
+uploadZone.addEventListener('dragover', e => { e.preventDefault(); uploadZone.classList.add('dragover'); });
+uploadZone.addEventListener('dragleave', () => uploadZone.classList.remove('dragover'));
+uploadZone.addEventListener('drop', e => {
+    e.preventDefault(); uploadZone.classList.remove('dragover');
+    handleFiles([...e.dataTransfer.files].filter(f => f.type.startsWith('audio/')));
+});
+fileInput.addEventListener('change', () => { handleFiles([...fileInput.files]); fileInput.value = ''; });
+
+async function handleFiles(files) {
+    if (!files.length) return;
+    uploadStatus.style.display = 'block';
+    let uploaded = 0;
+    for (const file of files) {
+        uploadStatus.textContent = `Subiendo ${file.name} (${uploaded+1}/${files.length})...`;
+        try {
+            const uploadResult = await cloudinaryService.uploadAudio(file);
+            const url = uploadResult.url;
+            const title = file.name.replace(/\.[^.]+$/, '').replace(/[-_]/g,' ');
+            const iconMap = { efectos: 'fa-burst', sintonias: 'fa-music', musica: 'fa-headphones' };
+            const newId = await dbService.addSound({ title, url, category: currentCat, icon: iconMap[currentCat], order: allSounds.length });
+            allSounds.push({ docId: newId, title, url, category: currentCat, icon: iconMap[currentCat] });
+            uploaded++;
+        } catch(e) {
+            Swal.fire('Error', `No se pudo subir ${file.name}: ${e.message}`, 'error');
+        }
+    }
+    uploadStatus.style.display = 'none';
+    renderGrid(); updateBadges();
+    if (uploaded > 0) Swal.fire({ icon:'success', title: uploaded + ' sonido(s) añadido(s)', timer: 2000, showConfirmButton: false });
+}
+
+// SEED DEFAULTS
+document.getElementById('btnSeedDefaults').addEventListener('click', async () => {
+    const r = await Swal.fire({
+        title: 'Inicializar Librería',
+        html: 'Añade los 20 sonidos predeterminados locales a Firestore.<br><b>Solo añade si la colección está vacía.</b>',
+        icon: 'question', showCancelButton: true,
+        confirmButtonText: 'Inicializar', cancelButtonText: 'Cancelar'
+    });
+    if (!r.isConfirmed) return;
+    Swal.fire({ title: 'Guardando...', allowOutsideClick: false, didOpen: () => Swal.showLoading() });
+    await dbService.initDefaultSounds(defaultLibrary);
+    await loadSounds();
+    Swal.close();
+    Swal.fire({ icon: 'success', title: 'Hecho', timer: 2000, showConfirmButton: false });
+});
+</script>
+</body>
+</html>

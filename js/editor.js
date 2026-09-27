@@ -16,15 +16,30 @@ let audioBoard = null;
 // Librería estática por defecto (rutas relativas)
 const defaultLibrary = {
     sintonias: [
-        { title: "Sintonía Noticias", url: "./assets/sounds/sintonia1.mp3" },
-        { title: "Sintonía Magacín", url: "./assets/sounds/sintonia2.mp3" }
+        { title: "Sintonía Inicio",       url: "./assets/sounds/sintonias/sintonia-inicio.wav" },
+        { title: "Sintonía Noticias",     url: "./assets/sounds/sintonias/sintonia-noticias.wav" },
+        { title: "Final de Programa",     url: "./assets/sounds/sintonias/final-programa.wav" },
+        { title: "Jingle Victoria",       url: "./assets/sounds/sintonias/jingle-correcto.wav" }
     ],
     efectos: [
-        { title: "Aplausos", url: "./assets/sounds/aplausos.mp3" },
-        { title: "Risa", url: "./assets/sounds/risa.mp3" }
+        { title: "Aplausos",              url: "./assets/sounds/efectos/aplausos.wav" },
+        { title: "Risas",                 url: "./assets/sounds/efectos/risas.wav" },
+        { title: "Bocina",                url: "./assets/sounds/efectos/bocina.wav" },
+        { title: "Buzzer Fallo",          url: "./assets/sounds/efectos/buzzer-fallo.wav" },
+        { title: "Campana Victoria",      url: "./assets/sounds/efectos/campana-victoria.wav" },
+        { title: "Redoble de Tambor",     url: "./assets/sounds/efectos/redoble.wav" },
+        { title: "Silbato",               url: "./assets/sounds/efectos/silbato.wav" },
+        { title: "Sonido Correcto",       url: "./assets/sounds/efectos/sonido-correcto.wav" },
+        { title: "Boing",                 url: "./assets/sounds/efectos/boing.wav" },
+        { title: "Grillos",               url: "./assets/sounds/efectos/grillos.wav" },
+        { title: "Cuernos Game Show",     url: "./assets/sounds/efectos/cuernos-game-show.wav" },
+        { title: "Trombón Triste",        url: "./assets/sounds/efectos/trombón-triste.wav" }
     ],
     musica: [
-        { title: "Fondo Tranquilo", url: "./assets/sounds/fondo1.mp3" }
+        { title: "Fondo Lounge",          url: "./assets/sounds/musica/fondo-lounge.wav" },
+        { title: "Fondo Positivo",        url: "./assets/sounds/musica/fondo-positivo.wav" },
+        { title: "Fondo Dramático",       url: "./assets/sounds/musica/fondo-dramatico.wav" },
+        { title: "Fondo Alegre",          url: "./assets/sounds/musica/fondo-alegre.wav" }
     ]
 };
 
