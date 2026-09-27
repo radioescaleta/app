@@ -2,7 +2,8 @@
   display: grid;
   grid-template-columns: 1fr 300px;
   gap: 20px;
-  height: calc(100vh - 80px);
+  height: calc(100vh - 130px);
+  overflow: hidden;
   padding: 20px;
 }
 
@@ -563,4 +564,14 @@ body.live-mode .btn-title {
     body.live-mode .time-input {
         font-size: 1em;
     }
+}
+
+@keyframes pulse-red {
+    0% { transform: scale(1); opacity: 1; box-shadow: 0 0 10px rgba(244, 67, 54, 0.5); }
+    50% { transform: scale(1.05); opacity: 0.8; box-shadow: 0 0 20px rgba(244, 67, 54, 0.8); }
+    100% { transform: scale(1); opacity: 1; box-shadow: 0 0 10px rgba(244, 67, 54, 0.5); }
+}
+
+#onAirBadge {
+    animation: pulse-red 2s infinite;
 }

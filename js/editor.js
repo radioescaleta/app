@@ -105,7 +105,7 @@ async function initEditor(user) {
         if (mediaRecorder && mediaRecorder.state === 'recording') {
             // Parar grabación
             mediaRecorder.stop();
-            btn.innerHTML = '<i class="fa-solid fa-circle-dot"></i> Grabar Podcast';
+            btn.innerHTML = '<i class="fa-solid fa-circle-dot"></i> REC';
             btn.classList.remove('live-active'); // Quitamos parpadeo si lo pusimos
             return;
         }
@@ -181,7 +181,7 @@ async function initEditor(user) {
             };
 
             mediaRecorder.start();
-            btn.innerHTML = '<i class="fa-solid fa-stop"></i> Parar Grabación';
+            btn.innerHTML = '<i class="fa-solid fa-stop"></i> STOP';
             btn.classList.add('live-active'); // Usa el parpadeo de live-active
             
         } catch (err) {
@@ -331,7 +331,7 @@ async function initEditor(user) {
             btn.style.backgroundColor = '#607d8b';
             escaletaUI.setSortable(false);
             liveTimer.classList.remove('hidden');
-            btnRecord.style.display = 'inline-block';
+            btnRecord.style.display = 'flex';
         } else {
             btn.innerHTML = '<i class="fa-solid fa-tower-broadcast"></i> Modo Directo';
             btn.style.backgroundColor = '#ff9800';
@@ -346,26 +346,70 @@ async function initEditor(user) {
             clearInterval(timerInterval);
             timerInterval = null;
             btnTimerPlay.innerHTML = '<i class="fa-solid fa-play"></i>';
+            document.getElementById('onAirBadge').style.visibility = 'hidden';
         } else {
-            btnTimerPlay.innerHTML = '<i class="fa-solid fa-pause"></i>';
-            timerInterval = setInterval(() => {
-                timerSeconds++;
-                const m = String(Math.floor(timerSeconds / 60)).padStart(2, '0');
-                const s = String(timerSeconds % 60).padStart(2, '0');
-                timerDisplay.innerText = `${m}:${s}`;
+            if (timerSeconds === 0) {
+                // Iniciar cuenta atrás de 5 segundos
+                let countdown = 5;
+                let preTimer = null;
                 
-                // Highlight live blocks
-                escaletaUI.highlightLiveBlocks(timerSeconds);
-                audioBoard.highlightLiveBlocks(timerSeconds);
-            }, 1000);
+                Swal.fire({
+                    title: '¡Preparados!',
+                    html: '<div style="font-size: 4em; font-weight: bold; color: #ff9800;" id="countdownNumber">5</div><p>Comenzando emisión...</p>',
+                    showCancelButton: true,
+                    cancelButtonText: 'Cancelar',
+                    showConfirmButton: false,
+                    allowOutsideClick: false,
+                    didOpen: () => {
+                        const numberEl = document.getElementById('countdownNumber');
+                        preTimer = setInterval(() => {
+                            countdown--;
+                            if (countdown > 0) {
+                                numberEl.innerText = countdown;
+                            } else {
+                                clearInterval(preTimer);
+                                Swal.close();
+                            }
+                        }, 1000);
+                    },
+                    willClose: () => {
+                        if (preTimer) clearInterval(preTimer);
+                    }
+                }).then((result) => {
+                    if (result.dismiss === Swal.DismissReason.cancel) {
+                        // Cancelado
+                        return;
+                    }
+                    // Si termina la cuenta atrás, empieza
+                    startRealTimer();
+                });
+            } else {
+                startRealTimer();
+            }
         }
     });
+
+    function startRealTimer() {
+        btnTimerPlay.innerHTML = '<i class="fa-solid fa-pause"></i>';
+        document.getElementById('onAirBadge').style.visibility = 'visible';
+        timerInterval = setInterval(() => {
+            timerSeconds++;
+            const m = String(Math.floor(timerSeconds / 60)).padStart(2, '0');
+            const s = String(timerSeconds % 60).padStart(2, '0');
+            timerDisplay.innerText = `${m}:${s}`;
+            
+            // Highlight live blocks
+            escaletaUI.highlightLiveBlocks(timerSeconds);
+            audioBoard.highlightLiveBlocks(timerSeconds);
+        }, 1000);
+    }
 
     document.getElementById('btnTimerReset').addEventListener('click', () => {
         clearInterval(timerInterval);
         timerInterval = null;
         timerSeconds = 0;
         timerDisplay.innerText = "00:00";
+        document.getElementById('onAirBadge').style.visibility = 'hidden';
         btnTimerPlay.innerHTML = '<i class="fa-solid fa-play"></i>';
     });
 
