@@ -1,8 +1,8 @@
 // js/editor.js
 import { authService } from './services/authService.js?v=2';
 import { cloudinaryService } from './services/cloudinaryService.js';
-import { setupUserProfile } from './utils/profileUI.js?v=7';
-import { dbService } from './services/dbService.js?v=4';
+import { setupUserProfile } from './utils/profileUI.js?v=8';
+import { dbService } from './services/dbService.js?v=5';
 import { Program } from './models/Program.js';
 import { EscaletaUI } from './components/EscaletaUI.js';
 import { AudioBoard } from './components/AudioBoard.js';
@@ -12,6 +12,7 @@ import { downloadPDF } from './utils/pdfGenerator.js';
 let currentProgram = new Program();
 let escaletaUI = null;
 let audioBoard = null;
+let sharedLibrary = null; // Se carga desde Firestore
 
 // Librería estática por defecto (rutas relativas)
 const defaultLibrary = {
@@ -53,6 +54,20 @@ document.addEventListener('DOMContentLoaded', async () => {
         await dbService.saveUser(user);
         const profile = await dbService.getUserProfile(user.uid) || {};
         setupUserProfile(user, profile);
+        // Cargar librería compartida desde Firestore (con fallback a local)
+        try {
+            const sounds = await dbService.getSoundLibrary();
+            if (sounds && sounds.length > 0) {
+                sharedLibrary = { sintonias: [], efectos: [], musica: [] };
+                sounds.forEach(s => {
+                    if (sharedLibrary[s.category]) {
+                        sharedLibrary[s.category].push({ title: s.title, url: s.url, icon: s.icon });
+                    }
+                });
+            }
+        } catch(e) {
+            console.warn('No se pudo cargar la librería de Firestore, usando local:', e);
+        }
         await initEditor(user);
     });
 });
@@ -488,28 +503,54 @@ function openLibraryModal(category, onSelect) {
     
     document.getElementById('modalTitle').innerText = titleMap[category];
 
-    const items = defaultLibrary[category] || [];
+    // Usar la librería de Firestore si está disponible, si no la local
+    const library = sharedLibrary || defaultLibrary;
+    const items = library[category] || [];
     
     if (items.length === 0) {
-        list.innerHTML = '<li>No hay audios disponibles.</li>';
+        list.innerHTML = '<li style="color:#aaa; padding:10px;">No hay audios en esta categoría.</li>';
     } else {
         items.forEach(item => {
             const li = document.createElement('li');
             li.className = 'library-item';
             
+            const icon = item.icon ? `<i class="fa-solid ${item.icon}" style="margin-right:6px; color:#f06292;"></i>` : '';
+            
             const span = document.createElement('span');
-            span.innerText = item.title;
+            span.innerHTML = icon + item.title;
+            
+            // Mini play button
+            const btnPlay = document.createElement('button');
+            btnPlay.className = 'btn btn-secondary';
+            btnPlay.style.cssText = 'padding:4px 8px; font-size:12px; background:transparent; color:#888; border:1px solid #ddd;';
+            btnPlay.innerHTML = '<i class="fa-solid fa-play"></i>';
+            let previewAudio = null;
+            btnPlay.onclick = (e) => {
+                e.stopPropagation();
+                if (previewAudio) { previewAudio.pause(); previewAudio = null; btnPlay.innerHTML = '<i class="fa-solid fa-play"></i>'; return; }
+                previewAudio = new Audio(item.url);
+                previewAudio.play();
+                btnPlay.innerHTML = '<i class="fa-solid fa-stop"></i>';
+                previewAudio.onended = () => { btnPlay.innerHTML = '<i class="fa-solid fa-play"></i>'; previewAudio = null; };
+            };
             
             const btn = document.createElement('button');
             btn.className = 'btn btn-primary';
-            btn.innerText = 'Seleccionar';
+            btn.style.cssText = 'padding:4px 10px; font-size:12px;';
+            btn.innerText = 'Usar';
             btn.onclick = () => {
+                if (previewAudio) previewAudio.pause();
                 onSelect({ category, title: item.title, url: item.url });
                 modal.style.display = 'none';
             };
             
+            const actions = document.createElement('div');
+            actions.style.cssText = 'display:flex; gap:5px;';
+            actions.appendChild(btnPlay);
+            actions.appendChild(btn);
+            
             li.appendChild(span);
-            li.appendChild(btn);
+            li.appendChild(actions);
             list.appendChild(li);
         });
     }

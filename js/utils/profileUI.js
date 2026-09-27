@@ -1,4 +1,4 @@
-import { dbService } from '../services/dbService.js?v=4';
+import { dbService } from '../services/dbService.js?v=5';
 import { authService } from '../services/authService.js?v=2';
 
 export function formatName(fullName) {
