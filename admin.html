@@ -1,6 +1,8 @@
 <!DOCTYPE html>
 <html lang="es">
 <head>
+    <link rel="icon" type="image/svg+xml" href="./favicon.svg">
+
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Panel Superadmin — Radioescaleta</title>
@@ -127,16 +129,30 @@
     </style>
 </head>
 <body>
-    <header>
+        <header>
         <div class="logo">
-            <a href="index.html" style="color: inherit; text-decoration: none;">
-                <i class="fa-solid fa-arrow-left"></i>
-                <i class="fa-solid fa-radio"></i> Radioescaleta
+            <a href="dashboard.html" style="color: inherit; text-decoration: none;">
+                <i class="fa-solid fa-arrow-left"></i> <i class="fa-solid fa-radio"></i> Radioescaleta
             </a>
         </div>
-        <div style="display:flex; align-items:center; gap:10px;">
-            <span id="userName" style="font-weight:bold;"></span>
-            <span style="background:#f06292; color:white; padding:2px 8px; border-radius:12px; font-size:12px;">Superadmin</span>
+        <!-- User Profile Dropdown -->
+            <div class="profile-dropdown" id="userProfileDropdown" >
+                <img src="" alt="Avatar" class="avatar-img" id="userAvatar">
+                <span class="profile-name" id="userNameLabel">Usuario</span>
+                <i class="fa-solid fa-chevron-down" style="font-size: 10px; color: #888;"></i>
+                
+                <div class="profile-menu">
+                    <a class="profile-menu-item" id="btnEditProfile">
+                        <i class="fa-solid fa-user-pen" style="width: 20px;"></i> Modificar perfil
+                    </a>
+                    <a class="profile-menu-item danger" id="btnLogout">
+                        <i class="fa-solid fa-right-from-bracket" style="width: 20px;"></i> Cerrar sesión
+                    </a>
+                </div>
+            </div>
+            
+        <div id="userProfile" class="header-controls" style="display: flex; align-items: center; gap: 10px;">
+            <span id="userRoleBadge" style="display:none; color:white; padding: 2px 8px; border-radius: 12px; font-size: 12px; font-weight: bold;"></span>
         </div>
     </header>
 
@@ -179,6 +195,25 @@
         </div>
 
     </div>
+
+        <footer class="site-footer">
+        <div class="footer-content">
+            <div class="footer-brand">
+                <i class="fa-solid fa-radio"></i> Radioescaleta 2026
+            </div>
+            <div class="footer-license">
+                <a rel="license" href="http://creativecommons.org/licenses/by-nc-sa/4.0/" target="_blank" title="Creative Commons">
+                    <img alt="Licencia CC" src="https://i.creativecommons.org/l/by-nc-sa/4.0/88x31.png" style="border-width:0;"/>
+                </a>
+                <p>Bajo licencia <a rel="license" href="http://creativecommons.org/licenses/by-nc-sa/4.0/" target="_blank">CC BY-NC-SA 4.0</a></p>
+            </div>
+            <div class="footer-links">
+                <a href="privacidad.html">Privacidad</a>
+                <span class="separator">&bull;</span>
+                <a href="terminos.html">Términos</a>
+            </div>
+        </div>
+    </footer>
 
     <script type="module" src="./js/admin.js?v=3"></script>
 </body>

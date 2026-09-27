@@ -1,6 +1,7 @@
 // js/admin.js
 import { authService } from './services/authService.js?v=2';
-import { dbService } from './services/dbService.js?v=5';
+import { setupUserProfile } from './utils/profileUI.js?v=12';
+import { dbService } from './services/dbService.js?v=6';
 
 document.addEventListener('DOMContentLoaded', () => {
     const userName = document.getElementById('userName');
@@ -13,12 +14,13 @@ document.addEventListener('DOMContentLoaded', () => {
         if (!user) { window.location.href = 'index.html'; return; }
 
         const profile = await dbService.getUserProfile(user.uid);
+        setupUserProfile(user, profile);
         if (!profile || profile.role !== 'superadmin') {
             Swal.fire('Acceso denegado', 'Solo para Superadministrador.', 'error')
                 .then(() => window.location.href = 'index.html');
             return;
         }
-        userName.textContent = profile.displayName || user.email;
+        if (userName) userName.textContent = profile.displayName || user.email;
         loadAll();
     });
 

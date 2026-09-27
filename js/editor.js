@@ -1,8 +1,8 @@
 // js/editor.js
 import { authService } from './services/authService.js?v=2';
 import { cloudinaryService } from './services/cloudinaryService.js';
-import { setupUserProfile } from './utils/profileUI.js?v=8';
-import { dbService } from './services/dbService.js?v=5';
+import { setupUserProfile } from './utils/profileUI.js?v=12';
+import { dbService } from './services/dbService.js?v=6';
 import { Program } from './models/Program.js';
 import { EscaletaUI } from './components/EscaletaUI.js?v=2';
 import { AudioBoard } from './components/AudioBoard.js';
@@ -17,30 +17,36 @@ let sharedLibrary = null; // Se carga desde Firestore
 // Librería estática por defecto (rutas relativas)
 const defaultLibrary = {
     sintonias: [
-        { title: "Sintonía Inicio",       url: "./assets/sounds/sintonias/sintonia-inicio.wav" },
-        { title: "Sintonía Noticias",     url: "./assets/sounds/sintonias/sintonia-noticias.wav" },
-        { title: "Final de Programa",     url: "./assets/sounds/sintonias/final-programa.wav" },
-        { title: "Jingle Victoria",       url: "./assets/sounds/sintonias/jingle-correcto.wav" }
+        { title: "Sintonía Inicio",    url: "./assets/sounds/sintonias/sintonia-inicio.wav",   icon: "fa-play" },
+        { title: "Sintonía Noticias",  url: "./assets/sounds/sintonias/sintonia-noticias.wav", icon: "fa-newspaper" },
+        { title: "Final de Programa",  url: "./assets/sounds/sintonias/final-programa.wav",    icon: "fa-flag-checkered" },
+        { title: "Jingle Victoria",    url: "./assets/sounds/sintonias/jingle-correcto.wav",   icon: "fa-trophy" }
     ],
     efectos: [
-        { title: "Aplausos",              url: "./assets/sounds/efectos/aplausos.wav" },
-        { title: "Risas",                 url: "./assets/sounds/efectos/risas.wav" },
-        { title: "Bocina",                url: "./assets/sounds/efectos/bocina.wav" },
-        { title: "Buzzer Fallo",          url: "./assets/sounds/efectos/buzzer-fallo.wav" },
-        { title: "Campana Victoria",      url: "./assets/sounds/efectos/campana-victoria.wav" },
-        { title: "Redoble de Tambor",     url: "./assets/sounds/efectos/redoble.wav" },
-        { title: "Silbato",               url: "./assets/sounds/efectos/silbato.wav" },
-        { title: "Sonido Correcto",       url: "./assets/sounds/efectos/sonido-correcto.wav" },
-        { title: "Boing",                 url: "./assets/sounds/efectos/boing.wav" },
-        { title: "Grillos",               url: "./assets/sounds/efectos/grillos.wav" },
-        { title: "Cuernos Game Show",     url: "./assets/sounds/efectos/cuernos-game-show.wav" },
-        { title: "Trombón Triste",        url: "./assets/sounds/efectos/trombón-triste.wav" }
+        { title: "Alarma1", url: "./assets/sounds/efectos/Alarma1.mp3", icon: "fa-bell" },
+        { title: "Alarma2", url: "./assets/sounds/efectos/Alarma2.mp3", icon: "fa-bell" },
+        { title: "Aplausos1", url: "./assets/sounds/efectos/Aplausos1.mp3", icon: "fa-hands-clapping" },
+        { title: "Aplausos2", url: "./assets/sounds/efectos/Aplausos2.mp3", icon: "fa-hands-clapping" },
+        { title: "Aplausos3", url: "./assets/sounds/efectos/Aplausos3.mp3", icon: "fa-hands-clapping" },
+        { title: "Campanas", url: "./assets/sounds/efectos/Campanas.mp3", icon: "fa-bell" },
+        { title: "Campanas2", url: "./assets/sounds/efectos/Campanas2.mp3", icon: "fa-bell" },
+        { title: "Cartoon_1", url: "./assets/sounds/efectos/Cartoon_1.wav", icon: "fa-face-laugh" },
+        { title: "Cartoon2", url: "./assets/sounds/efectos/Cartoon2.mp3", icon: "fa-face-laugh" },
+        { title: "Cartoon3", url: "./assets/sounds/efectos/Cartoon3.mp3", icon: "fa-face-laugh" },
+        { title: "Cartoon4", url: "./assets/sounds/efectos/Cartoon4.mp3", icon: "fa-face-laugh" },
+        { title: "Clank1", url: "./assets/sounds/efectos/Clank1.mp3", icon: "fa-bolt" },
+        { title: "Cremallera", url: "./assets/sounds/efectos/Cremallera.mp3", icon: "fa-wave-square" },
+        { title: "Golpe", url: "./assets/sounds/efectos/Golpe.mp3", icon: "fa-burst" }
     ],
     musica: [
-        { title: "Fondo Lounge",          url: "./assets/sounds/musica/fondo-lounge.wav" },
-        { title: "Fondo Positivo",        url: "./assets/sounds/musica/fondo-positivo.wav" },
-        { title: "Fondo Dramático",       url: "./assets/sounds/musica/fondo-dramatico.wav" },
-        { title: "Fondo Alegre",          url: "./assets/sounds/musica/fondo-alegre.wav" }
+        { title: "Aspire", url: "./assets/sounds/musica/Aspire.mp3", icon: "fa-music" },
+        { title: "Clock", url: "./assets/sounds/musica/Clock.mp3", icon: "fa-clock" },
+        { title: "DownTownSaturdayMarket", url: "./assets/sounds/musica/DownTownSaturdayMarket.wav", icon: "fa-music" },
+        { title: "FunFolk", url: "./assets/sounds/musica/FunFolk.mp3", icon: "fa-guitar" },
+        { title: "Happy_Dreams", url: "./assets/sounds/musica/Happy_Dreams.mp3", icon: "fa-face-smile-beam" },
+        { title: "MusicalSmile", url: "./assets/sounds/musica/MusicalSmile.wav", icon: "fa-face-smile-beam" },
+        { title: "MusicalSmile2", url: "./assets/sounds/musica/MusicalSmile2.wav", icon: "fa-face-smile-beam" },
+        { title: "Sport_Drums", url: "./assets/sounds/musica/Sport_Drums.mp3", icon: "fa-drum" }
     ]
 };
 

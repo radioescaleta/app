@@ -1,7 +1,8 @@
 // js/docente.js
 import { authService } from './services/authService.js?v=2';
 import { classroomService } from './services/classroomService.js?v=2';
-import { dbService } from './services/dbService.js?v=5';
+import { setupUserProfile } from './utils/profileUI.js?v=12';
+import { dbService } from './services/dbService.js?v=6';
 
 document.addEventListener('DOMContentLoaded', () => {
     const userName = document.getElementById('userName');
@@ -112,6 +113,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
         // Verificar que sea docente o superadmin
         const profile = await dbService.getUserProfile(user.uid);
+        setupUserProfile(user, profile);
         if (!profile || (profile.role !== 'docente' && profile.role !== 'superadmin')) {
             Swal.fire('Acceso denegado', 'Esta página es solo para Docentes.', 'error')
                 .then(() => window.location.href = 'index.html');
@@ -119,7 +121,7 @@ document.addEventListener('DOMContentLoaded', () => {
         }
 
         docenteProfile = profile;
-        userName.textContent = profile.displayName || user.email;
+        if (userName) userName.textContent = profile.displayName || user.email;
         centroNombre.textContent = profile.centro || 'Sin centro asignado';
 
         loadAlumnos();

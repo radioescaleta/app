@@ -51,12 +51,32 @@ body {
 /* Header */
 header {
   display: flex;
-  justify-content: space-between;
   align-items: center;
+  justify-content: flex-start;
   padding: 20px;
   background-color: white;
   border-bottom: 2px solid var(--bg-color);
+  position: relative;
 }
+
+.logo {
+  order: 1;
+  margin-right: auto;
+}
+.title-wrapper {
+  order: 2;
+  position: absolute;
+  left: 50%;
+  transform: translateX(-50%);
+}
+.header-controls {
+  order: 3;
+  margin-right: 15px;
+}
+.profile-dropdown {
+  order: 4;
+}
+
 
 .logo {
   font-size: 24px;
@@ -173,4 +193,270 @@ header {
     border: 1px solid #ddd;
     border-radius: 8px;
     font-size: 14px;
+}
+
+/* RESPONSIVE CABECERAS Y MÓVILES */
+
+
+@media (max-width: 768px) {
+    /* Adaptar botones cuando entran en el menú de perfil */
+    .profile-menu .header-controls {
+        display: flex !important;
+        flex-direction: column;
+        gap: 5px;
+        padding: 5px;
+        border-bottom: 1px solid #eee;
+        margin-bottom: 5px;
+        width: 100%;
+        order: -1; /* Arriba del todo en el menú */
+    }
+    .profile-menu .header-controls .btn {
+        width: 100%;
+        text-align: left;
+        border-radius: 4px;
+        padding: 8px 12px;
+        font-size: 13px;
+        justify-content: flex-start;
+        display: flex;
+        align-items: center;
+        gap: 8px;
+    }
+    .profile-menu .header-controls #userRoleBadge {
+        margin: 5px 10px;
+        text-align: center;
+    }
+    .profile-menu .header-controls #liveTimer {
+        margin: 5px 10px;
+        justify-content: center;
+    }
+
+    header {
+        flex-wrap: wrap;
+        padding: 10px 15px;
+    }
+    
+    
+
+    
+
+    /* Perfil de usuario en cabecera */
+    .profile-dropdown {
+        padding: 4px;
+        margin-left: 10px;
+    }
+    .profile-name {
+        display: none !important;
+    }
+    .profile-dropdown i.fa-chevron-down {
+        display: none !important;
+    }
+    .profile-menu {
+        right: 0;
+        width: 220px;
+        position: absolute;
+    }
+    /* Mostrar nombre dentro del menú en móviles */
+    .profile-menu::before {
+        content: attr(data-mobile-name);
+        display: block;
+        padding: 12px 16px;
+        font-weight: bold;
+        color: #333;
+        border-bottom: 1px solid #eee;
+        background: #fafafa;
+        text-align: center;
+    }
+
+
+    
+    /* Panel lateral / Grid de programas */
+    .main-grid {
+        grid-template-columns: 1fr !important;
+    }
+    .sidebar {
+        width: 100% !important;
+        border-right: none !important;
+        border-bottom: 1px solid #ddd;
+    }
+    
+    /* Layout del editor en móvil */
+    .editor-layout {
+        flex-direction: column !important;
+    }
+    .blocks-palette {
+        width: 100% !important;
+        border-left: none !important;
+        border-top: 1px solid #ddd;
+        order: -1; /* Que la botonera salga arriba en móviles */
+        display: flex;
+        flex-wrap: wrap;
+        gap: 10px;
+        padding: 10px !important;
+    }
+    .blocks-palette > div {
+        flex: 1 1 100px;
+        margin-bottom: 0 !important;
+    }
+}
+
+@media (max-width: 768px) {
+    /* Adaptar botones cuando entran en el menú de perfil */
+    .profile-menu .header-controls {
+        display: flex !important;
+        flex-direction: column;
+        gap: 5px;
+        padding: 5px;
+        border-bottom: 1px solid #eee;
+        margin-bottom: 5px;
+        width: 100%;
+        order: -1; /* Arriba del todo en el menú */
+    }
+    .profile-menu .header-controls .btn {
+        width: 100%;
+        text-align: left;
+        border-radius: 4px;
+        padding: 8px 12px;
+        font-size: 13px;
+        justify-content: flex-start;
+        display: flex;
+        align-items: center;
+        gap: 8px;
+    }
+    .profile-menu .header-controls #userRoleBadge {
+        margin: 5px 10px;
+        text-align: center;
+    }
+    .profile-menu .header-controls #liveTimer {
+        margin: 5px 10px;
+        justify-content: center;
+    }
+
+    /* Nueva estructura de la cabecera en móvil */
+    header {
+        display: flex;
+        flex-wrap: wrap;
+        align-items: center;
+        justify-content: space-between;
+    }
+    .logo {
+        order: 1;
+        flex: 1; /* Para empujar el resto a la derecha si es necesario, o nada */
+    }
+    .profile-dropdown {
+        order: 2;
+        margin-left: auto;
+        margin-right: 0;
+    }
+    
+
+    .title-wrapper {
+        position: relative !important;
+        left: 0 !important;
+        transform: none !important;
+        order: 4;
+        width: 100%;
+        margin-top: 15px;
+    }
+
+    .header-controls {
+        order: 5;
+    }
+}
+
+/* ===== NEW FOOTER ===== */
+.site-footer {
+    background-color: #f8f9fa;
+    border-top: 1px solid #eaeaea;
+    padding: 30px 20px;
+    margin-top: 50px;
+    color: #64748b;
+    font-size: 14px;
+    width: 100%;
+}
+
+.footer-content {
+    max-width: 1200px;
+    margin: 0 auto;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 20px;
+    text-align: center;
+}
+
+.footer-brand {
+    font-weight: 700;
+    color: #334155;
+    font-size: 16px;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.footer-brand i {
+    color: var(--primary-color);
+}
+
+.footer-license {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 5px;
+}
+
+.footer-license img {
+    opacity: 0.7;
+    transition: opacity 0.2s;
+    height: 31px;
+}
+
+.footer-license img:hover {
+    opacity: 1;
+}
+
+.footer-license p {
+    margin: 0;
+    color: #94a3b8;
+    font-size: 13px;
+}
+
+.footer-license a {
+    color: #64748b;
+    text-decoration: underline;
+    transition: color 0.2s;
+}
+.footer-license a:hover {
+    color: var(--primary-color);
+}
+
+.footer-links {
+    display: flex;
+    gap: 15px;
+    align-items: center;
+}
+
+.footer-links a {
+    color: var(--secondary-color);
+    text-decoration: none;
+    font-weight: 600;
+    transition: color 0.2s;
+}
+
+.footer-links a:hover {
+    color: var(--primary-color);
+}
+
+.footer-links .separator {
+    color: #cbd5e1;
+}
+
+@media (min-width: 768px) {
+    .footer-content {
+        flex-direction: row;
+        justify-content: space-between;
+        text-align: left;
+    }
+    .footer-license {
+        align-items: flex-start;
+    }
 }

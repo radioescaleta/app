@@ -1,10 +1,12 @@
 <!DOCTYPE html>
 <html lang="es">
 <head>
+    <link rel="icon" type="image/svg+xml" href="./favicon.svg">
+
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Gestión de Sonidos — Radioescaleta</title>
-    <link rel="stylesheet" href="./css/common.css?v=3">
+    <link rel="stylesheet" href="./css/common.css?v=4">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
     <style>
@@ -152,8 +154,8 @@
 </div>
 
 <div class="toolbar">
-    <button class="btn btn-secondary" id="btnSeedDefaults">
-        <i class="fa-solid fa-database"></i> Inicializar desde archivos locales
+    <button class="btn btn-secondary" id="btnSeedDefaults" style="background-color: #f44336;">
+        <i class="fa-solid fa-rotate"></i> Restablecer sonidos por defecto
     </button>
     <div class="spacer"></div>
     <span id="totalCount" style="color:#888; font-size:14px;"></span>
@@ -184,9 +186,29 @@
     </div>
 </div>
 
-<script type="module">
+    <footer class="site-footer">
+        <div class="footer-content">
+            <div class="footer-brand">
+                <i class="fa-solid fa-radio"></i> Radioescaleta 2026
+            </div>
+            <div class="footer-license">
+                <a rel="license" href="http://creativecommons.org/licenses/by-nc-sa/4.0/" target="_blank" title="Creative Commons">
+                    <img alt="Licencia CC" src="https://i.creativecommons.org/l/by-nc-sa/4.0/88x31.png" style="border-width:0;"/>
+                </a>
+                <p>Bajo licencia <a rel="license" href="http://creativecommons.org/licenses/by-nc-sa/4.0/" target="_blank">CC BY-NC-SA 4.0</a></p>
+            </div>
+            <div class="footer-links">
+                <a href="privacidad.html">Privacidad</a>
+                <span class="separator">&bull;</span>
+                <a href="terminos.html">Términos</a>
+            </div>
+        </div>
+    </footer>
+
+    <script type="module">
 import { authService }     from './js/services/authService.js?v=2';
-import { dbService }       from './js/services/dbService.js?v=5';
+import { dbService }       from './js/services/dbService.js?v=6';
+import { setupUserProfile } from './js/utils/profileUI.js?v=12';
 import { cloudinaryService } from './js/services/cloudinaryService.js';
 
 const SUPERADMIN_EMAIL = 'bernat13@gmail.com';
@@ -199,24 +221,30 @@ const defaultLibrary = {
         { title: "Jingle Victoria",    url: "./assets/sounds/sintonias/jingle-correcto.wav",   icon: "fa-trophy" }
     ],
     efectos: [
-        { title: "Aplausos",          url: "./assets/sounds/efectos/aplausos.wav",           icon: "fa-hands-clapping" },
-        { title: "Risas",             url: "./assets/sounds/efectos/risas.wav",              icon: "fa-face-laugh" },
-        { title: "Bocina",            url: "./assets/sounds/efectos/bocina.wav",             icon: "fa-bullhorn" },
-        { title: "Buzzer Fallo",      url: "./assets/sounds/efectos/buzzer-fallo.wav",       icon: "fa-xmark" },
-        { title: "Campana Victoria",  url: "./assets/sounds/efectos/campana-victoria.wav",   icon: "fa-bell" },
-        { title: "Redoble de Tambor", url: "./assets/sounds/efectos/redoble.wav",            icon: "fa-drum" },
-        { title: "Silbato",           url: "./assets/sounds/efectos/silbato.wav",            icon: "fa-whistle" },
-        { title: "Sonido Correcto",   url: "./assets/sounds/efectos/sonido-correcto.wav",    icon: "fa-check" },
-        { title: "Boing",             url: "./assets/sounds/efectos/boing.wav",              icon: "fa-circle" },
-        { title: "Grillos",           url: "./assets/sounds/efectos/grillos.wav",            icon: "fa-bug" },
-        { title: "Cuernos Game Show", url: "./assets/sounds/efectos/cuernos-game-show.wav",  icon: "fa-star" },
-        { title: "Trombón Triste",    url: "./assets/sounds/efectos/tromb\u00f3n-triste.wav",icon: "fa-face-sad-tear" }
+        { title: "Alarma1", url: "./assets/sounds/efectos/Alarma1.mp3", icon: "fa-bell" },
+        { title: "Alarma2", url: "./assets/sounds/efectos/Alarma2.mp3", icon: "fa-bell" },
+        { title: "Aplausos1", url: "./assets/sounds/efectos/Aplausos1.mp3", icon: "fa-hands-clapping" },
+        { title: "Aplausos2", url: "./assets/sounds/efectos/Aplausos2.mp3", icon: "fa-hands-clapping" },
+        { title: "Aplausos3", url: "./assets/sounds/efectos/Aplausos3.mp3", icon: "fa-hands-clapping" },
+        { title: "Campanas", url: "./assets/sounds/efectos/Campanas.mp3", icon: "fa-bell" },
+        { title: "Campanas2", url: "./assets/sounds/efectos/Campanas2.mp3", icon: "fa-bell" },
+        { title: "Cartoon_1", url: "./assets/sounds/efectos/Cartoon_1.wav", icon: "fa-face-laugh" },
+        { title: "Cartoon2", url: "./assets/sounds/efectos/Cartoon2.mp3", icon: "fa-face-laugh" },
+        { title: "Cartoon3", url: "./assets/sounds/efectos/Cartoon3.mp3", icon: "fa-face-laugh" },
+        { title: "Cartoon4", url: "./assets/sounds/efectos/Cartoon4.mp3", icon: "fa-face-laugh" },
+        { title: "Clank1", url: "./assets/sounds/efectos/Clank1.mp3", icon: "fa-bolt" },
+        { title: "Cremallera", url: "./assets/sounds/efectos/Cremallera.mp3", icon: "fa-wave-square" },
+        { title: "Golpe", url: "./assets/sounds/efectos/Golpe.mp3", icon: "fa-burst" }
     ],
     musica: [
-        { title: "Fondo Lounge",      url: "./assets/sounds/musica/fondo-lounge.wav",       icon: "fa-martini-glass" },
-        { title: "Fondo Positivo",    url: "./assets/sounds/musica/fondo-positivo.wav",     icon: "fa-sun" },
-        { title: "Fondo Dramático",   url: "./assets/sounds/musica/fondo-dramatico.wav",    icon: "fa-cloud-bolt" },
-        { title: "Fondo Alegre",      url: "./assets/sounds/musica/fondo-alegre.wav",       icon: "fa-face-smile-beam" }
+        { title: "Aspire", url: "./assets/sounds/musica/Aspire.mp3", icon: "fa-music" },
+        { title: "Clock", url: "./assets/sounds/musica/Clock.mp3", icon: "fa-clock" },
+        { title: "DownTownSaturdayMarket", url: "./assets/sounds/musica/DownTownSaturdayMarket.wav", icon: "fa-music" },
+        { title: "FunFolk", url: "./assets/sounds/musica/FunFolk.mp3", icon: "fa-guitar" },
+        { title: "Happy_Dreams", url: "./assets/sounds/musica/Happy_Dreams.mp3", icon: "fa-face-smile-beam" },
+        { title: "MusicalSmile", url: "./assets/sounds/musica/MusicalSmile.wav", icon: "fa-face-smile-beam" },
+        { title: "MusicalSmile2", url: "./assets/sounds/musica/MusicalSmile2.wav", icon: "fa-face-smile-beam" },
+        { title: "Sport_Drums", url: "./assets/sounds/musica/Sport_Drums.mp3", icon: "fa-drum" }
     ]
 };
 
@@ -238,6 +266,7 @@ authService.onAuthStateChanged(async (user) => {
     if (!user) { window.location.href = 'index.html'; return; }
     
     const profile = await dbService.getUserProfile(user.uid);
+            setupUserProfile(user, profile);
     if (!profile || profile.role !== 'superadmin') {
         window.location.href = 'index.html'; return;
     }
@@ -427,14 +456,15 @@ async function handleFiles(files) {
 // SEED DEFAULTS
 document.getElementById('btnSeedDefaults').addEventListener('click', async () => {
     const r = await Swal.fire({
-        title: 'Inicializar Librería',
-        html: 'Añade los 20 sonidos predeterminados locales a Firestore.<br><b>Solo añade si la colección está vacía.</b>',
-        icon: 'question', showCancelButton: true,
-        confirmButtonText: 'Inicializar', cancelButtonText: 'Cancelar'
+        title: 'Restablecer Librería',
+        html: 'Esto <b>borrará</b> todos los sonidos actuales y cargará los sonidos locales por defecto. ¿Estás seguro?',
+        icon: 'warning', showCancelButton: true,
+        confirmButtonColor: '#d33',
+        confirmButtonText: 'Sí, borrar y restablecer', cancelButtonText: 'Cancelar'
     });
     if (!r.isConfirmed) return;
     Swal.fire({ title: 'Guardando...', allowOutsideClick: false, didOpen: () => Swal.showLoading() });
-    await dbService.initDefaultSounds(defaultLibrary);
+    await dbService.initDefaultSounds(defaultLibrary, true);
     await loadSounds();
     Swal.close();
     Swal.fire({ icon: 'success', title: 'Hecho', timer: 2000, showConfirmButton: false });

@@ -1,4 +1,4 @@
-import { dbService } from '../services/dbService.js?v=5';
+import { dbService } from '../services/dbService.js?v=6';
 import { authService } from '../services/authService.js?v=2';
 
 export function formatName(fullName) {
@@ -19,17 +19,18 @@ export function setupUserProfile(user, profile) {
     
     if (!dropdown) return;
     
-    const newDropdown = dropdown.cloneNode(true);
-    dropdown.parentNode.replaceChild(newDropdown, dropdown);
+    const d = dropdown;
     
-    const d = document.getElementById('userProfileDropdown');
-    d.addEventListener('click', (e) => {
-        if (e.target.closest('.profile-menu-item')) return;
-        d.classList.toggle('open');
-    });
-    document.addEventListener('click', (e) => {
-        if (!d.contains(e.target)) d.classList.remove('open');
-    });
+    if (!d.dataset.listenersAdded) {
+        d.addEventListener('click', (e) => {
+            if (e.target.closest('.profile-menu-item')) return;
+            d.classList.toggle('open');
+        });
+        document.addEventListener('click', (e) => {
+            if (!d.contains(e.target)) d.classList.remove('open');
+        });
+        d.dataset.listenersAdded = 'true';
+    }
 
     const displayName = profile.displayName || user.displayName || user.email.split('@')[0];
     document.getElementById('userNameLabel').textContent = formatName(displayName);
@@ -287,3 +288,27 @@ function openAvatarEditor(user, profile, currentUrl) {
         }
     });
 }
+
+
+
+// Mover controles al menú de perfil en móviles
+function adaptMenu() {
+    const controls = document.querySelector('.header-controls');
+    const profileMenu = document.querySelector('.profile-menu');
+    if (!controls || !profileMenu) return;
+
+    if (window.innerWidth <= 768) {
+        if (controls.parentElement !== profileMenu) {
+            profileMenu.insertBefore(controls, profileMenu.firstChild);
+        }
+    } else {
+        const header = document.querySelector('header');
+        if (controls.parentElement !== header) {
+            // Lo devolvemos al header
+            header.appendChild(controls);
+        }
+    }
+}
+window.addEventListener('resize', adaptMenu);
+document.addEventListener('DOMContentLoaded', adaptMenu);
+setTimeout(adaptMenu, 500); // fallback

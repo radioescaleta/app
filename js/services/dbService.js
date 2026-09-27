@@ -344,11 +344,18 @@ class DbService {
         }
     }
 
-    async initDefaultSounds(defaultLibrary) {
-        // Seeds Firestore with the local defaults if collection is empty
+    async initDefaultSounds(defaultLibrary, force = false) {
+        // Seeds Firestore with the local defaults
         if (!db) return;
         const existing = await this.getSoundLibrary();
-        if (existing.length > 0) return; // already seeded
+        if (existing.length > 0 && !force) return; // already seeded
+        
+        if (force) {
+            // Eliminar todos los existentes
+            for (const s of existing) {
+                await this.deleteSound(s.docId);
+            }
+        }
 
         let order = 0;
         for (const [category, items] of Object.entries(defaultLibrary)) {

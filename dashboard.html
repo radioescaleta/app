@@ -1,0 +1,84 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <link rel="icon" type="image/svg+xml" href="./favicon.svg">
+
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Dashboard — Radioescaleta</title>
+    <link rel="stylesheet" href="./css/common.css?v=9">
+    <link rel="stylesheet" href="./css/index.css?v=3">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+</head>
+<body>
+
+    <!-- CABECERA -->
+    <header>
+        <div class="logo">
+            <a href="dashboard.html" style="color: inherit; text-decoration: none;">
+                <i class="fa-solid fa-radio"></i> Radioescaleta
+            </a>
+        </div>
+        <!-- User Profile Dropdown -->
+            <div class="profile-dropdown" id="userProfileDropdown" >
+                <img src="" alt="Avatar" class="avatar-img" id="userAvatar">
+                <span class="profile-name" id="userNameLabel">Usuario</span>
+                <i class="fa-solid fa-chevron-down" style="font-size: 10px; color: #888;"></i>
+                
+                <div class="profile-menu">
+                    <a class="profile-menu-item" id="btnEditProfile">
+                        <i class="fa-solid fa-user-pen" style="width: 20px;"></i> Modificar perfil
+                    </a>
+                    <a class="profile-menu-item danger" id="btnLogout">
+                        <i class="fa-solid fa-right-from-bracket" style="width: 20px;"></i> Cerrar sesión
+                    </a>
+                </div>
+            </div>
+        
+        <div id="userProfile" class="header-controls" style="display: flex; align-items: center; gap: 10px;">
+            <span id="userRoleBadge" style="display:none; color:white; padding: 2px 8px; border-radius: 12px; font-size: 12px; font-weight: bold;"></span>
+            
+            <button id="btnPanelDocente" class="btn btn-secondary" style="display:none; background-color:#1565c0;"><i class="fa-solid fa-chalkboard-user"></i> Panel Docente</button>
+            <button id="btnPanelAdmin" class="btn btn-secondary" style="display:none; background-color:#b71c1c;"><i class="fa-solid fa-shield-halved"></i> Superadmin</button>
+        </div>
+            
+            
+    </header>
+
+    <main>
+
+        <!-- ===== LANDING ===== -->
+        <!-- ===== DASHBOARD ===== -->
+        <section id="dashboardSection" class="container">
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-top: 30px;">
+                <h2>Mis Programas</h2>
+                <button id="btnNewProgram" class="btn btn-primary"><i class="fa-solid fa-plus"></i> Nueva Escaleta</button>
+            </div>
+            <div class="programs-grid" id="programsList"></div>
+        </section>
+
+    </main>
+
+        <footer class="site-footer">
+        <div class="footer-content">
+            <div class="footer-brand">
+                <i class="fa-solid fa-radio"></i> Radioescaleta 2026
+            </div>
+            <div class="footer-license">
+                <a rel="license" href="http://creativecommons.org/licenses/by-nc-sa/4.0/" target="_blank" title="Creative Commons">
+                    <img alt="Licencia CC" src="https://i.creativecommons.org/l/by-nc-sa/4.0/88x31.png" style="border-width:0;"/>
+                </a>
+                <p>Bajo licencia <a rel="license" href="http://creativecommons.org/licenses/by-nc-sa/4.0/" target="_blank">CC BY-NC-SA 4.0</a></p>
+            </div>
+            <div class="footer-links">
+                <a href="privacidad.html">Privacidad</a>
+                <span class="separator">&bull;</span>
+                <a href="terminos.html">Términos</a>
+            </div>
+        </div>
+    </footer>
+
+    <script type="module" src="./js/dashboard.js?v=6"></script>
+</body>
+</html>

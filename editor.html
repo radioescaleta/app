@@ -1,12 +1,14 @@
 <!DOCTYPE html>
 <html lang="es">
 <head>
+    <link rel="icon" type="image/svg+xml" href="./favicon.svg">
+
     <!-- Google Identity Services -->
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Editor - Radioescaleta</title>
     <link rel="stylesheet" href="./css/common.css?v=2">
-    <link rel="stylesheet" href="./css/editor.css">
+    <link rel="stylesheet" href="./css/editor.css?v=3">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     
     <!-- Librerías Externas -->
@@ -19,26 +21,15 @@
 <body>
     <header>
         <div class="logo">
-            <a href="index.html" style="color: inherit; text-decoration: none;">
+            <a href="dashboard.html" style="color: inherit; text-decoration: none;">
                 <i class="fa-solid fa-arrow-left"></i> <i class="fa-solid fa-radio"></i> Radioescaleta
             </a>
         </div>
-        <div>
+        <div class="title-wrapper" style="text-align: center;">
             <input type="text" id="programTitle" value="Mi Programa de Radio" style="font-size: 20px; border: none; border-bottom: 2px dashed transparent; font-weight: bold; outline: none; text-align: center; width: 350px; transition: border 0.2s; background: transparent; padding: 5px;" title="Haz clic para cambiar el nombre" onmouseover="this.style.borderBottom='2px dashed #ccc'" onmouseout="this.style.borderBottom='2px dashed transparent'">
         </div>
-        <div id="headerControls" style="display: flex; align-items: center; gap: 10px;">
-            <div id="liveTimer" class="hidden" style="margin-right: 10px; font-size: 24px; font-weight: bold; font-family: monospace; display: flex; align-items: center; gap: 10px;">
-                <span id="timerDisplay">00:00</span>
-                <button id="btnTimerPlay" class="btn" style="padding: 5px 10px; background: transparent; color: var(--text-color);"><i class="fa-solid fa-play"></i></button>
-                <button id="btnTimerReset" class="btn" style="padding: 5px 10px; background: transparent; color: var(--text-color);"><i class="fa-solid fa-stop"></i></button>
-            </div>
-            <button id="btnShare" class="btn btn-secondary" style="background-color: #9c27b0;"><i class="fa-solid fa-share-nodes"></i> Compartir</button>
-            <button id="btnRecordPodcast" class="btn" style="background-color: #f44336; color: white; display: none;" title="Grabar todo lo que suena en esta pestaña"><i class="fa-solid fa-circle-dot"></i> Grabar Podcast</button>
-            <button id="btnLiveMode" class="btn" style="background-color: #ff9800; color: white;"><i class="fa-solid fa-tower-broadcast"></i> Modo Directo</button>
-            <button id="btnSave" class="btn btn-secondary"><i class="fa-solid fa-save"></i> Guardar</button>
-            
-            <!-- User Profile Dropdown -->
-            <div class="profile-dropdown" id="userProfileDropdown" style="margin-left: 10px;">
+        <!-- User Profile Dropdown -->
+            <div class="profile-dropdown" id="userProfileDropdown" >
                 <img src="" alt="Avatar" class="avatar-img" id="userAvatar">
                 <span class="profile-name" id="userNameLabel">Usuario</span>
                 <i class="fa-solid fa-chevron-down" style="font-size: 10px; color: #888;"></i>
@@ -52,7 +43,20 @@
                     </a>
                 </div>
             </div>
+        
+        <div id="headerControls" class="header-controls" style="display: flex; align-items: center; gap: 10px;">
+            <div id="liveTimer" class="hidden" style="margin-right: 10px; font-size: 24px; font-weight: bold; font-family: monospace; display: flex; align-items: center; gap: 10px;">
+                <span id="timerDisplay">00:00</span>
+                <button id="btnTimerPlay" class="btn" style="padding: 5px 10px; background: transparent; color: var(--text-color);"><i class="fa-solid fa-play"></i></button>
+                <button id="btnTimerReset" class="btn" style="padding: 5px 10px; background: transparent; color: var(--text-color);"><i class="fa-solid fa-stop"></i></button>
+            </div>
+            <button id="btnShare" class="btn btn-secondary" style="background-color: #9c27b0;"><i class="fa-solid fa-share-nodes"></i> Compartir</button>
+            <button id="btnRecordPodcast" class="btn" style="background-color: #f44336; color: white; display: none;" title="Grabar todo lo que suena en esta pestaña"><i class="fa-solid fa-circle-dot"></i> Grabar Podcast</button>
+            <button id="btnLiveMode" class="btn" style="background-color: #ff9800; color: white;"><i class="fa-solid fa-tower-broadcast"></i> Modo Directo</button>
+            <button id="btnSave" class="btn btn-secondary"><i class="fa-solid fa-save"></i> Guardar</button>
         </div>
+            
+            
     </header>
 
     <div class="editor-layout">
@@ -116,11 +120,23 @@
         </div>
     </div>
 
-    <footer style="text-align: center; padding: 20px; background: white; border-top: 1px solid #ddd; margin-top: 20px;">
-        <p><a href="privacidad.html" style="color: var(--secondary-color);">Política de Privacidad</a> | <a href="terminos.html" style="color: var(--secondary-color);">Términos de Uso</a></p>
-        <p style="margin-top: 10px; font-size: 0.9em; color: #666;">
-            <a rel="license" href="http://creativecommons.org/licenses/by-nc-sa/4.0/"><img alt="Licencia de Creative Commons" style="border-width:0; vertical-align: middle; margin-right: 5px;" src="https://i.creativecommons.org/l/by-nc-sa/4.0/88x31.png" /></a><br />Este obra está bajo una <a rel="license" href="http://creativecommons.org/licenses/by-nc-sa/4.0/" style="color: #666;">licencia de Creative Commons Reconocimiento-NoComercial-CompartirIgual 4.0 Internacional</a>.
-        </p>
+        <footer class="site-footer">
+        <div class="footer-content">
+            <div class="footer-brand">
+                <i class="fa-solid fa-radio"></i> Radioescaleta 2026
+            </div>
+            <div class="footer-license">
+                <a rel="license" href="http://creativecommons.org/licenses/by-nc-sa/4.0/" target="_blank" title="Creative Commons">
+                    <img alt="Licencia CC" src="https://i.creativecommons.org/l/by-nc-sa/4.0/88x31.png" style="border-width:0;"/>
+                </a>
+                <p>Bajo licencia <a rel="license" href="http://creativecommons.org/licenses/by-nc-sa/4.0/" target="_blank">CC BY-NC-SA 4.0</a></p>
+            </div>
+            <div class="footer-links">
+                <a href="privacidad.html">Privacidad</a>
+                <span class="separator">&bull;</span>
+                <a href="terminos.html">Términos</a>
+            </div>
+        </div>
     </footer>
 
     <!-- Modal Librería de Sonidos -->
@@ -199,7 +215,7 @@
     <audio id="globalAudioPlayer" style="display:none;"></audio>
 
     <!-- Scripts (Módulos JS) -->
-    <script type="module" src="./js/editor.js?v=27"></script>
+    <script type="module" src="./js/editor.js?v=29"></script>
     <div id="toastMessage" style="visibility: hidden; min-width: 250px; background-color: #333; color: #fff; text-align: center; border-radius: 5px; padding: 16px; position: fixed; z-index: 2000; left: 50%; bottom: 30px; transform: translateX(-50%); opacity: 0; transition: opacity 0.3s, visibility 0.3s;">Guardado correctamente</div>
 </body>
 </html>
