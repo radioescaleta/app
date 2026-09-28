@@ -4,14 +4,12 @@ import { cloudinaryService } from './services/cloudinaryService.js';
 import { setupUserProfile } from './utils/profileUI.js?v=12';
 import { dbService } from './services/dbService.js?v=6';
 import { Program } from './models/Program.js';
-import { EscaletaUI } from './components/EscaletaUI.js?v=2';
-import { AudioBoard } from './components/AudioBoard.js';
-import { GanttUI } from './components/GanttUI.js';
-import { downloadPDF } from './utils/pdfGenerator.js';
+import { EscaletaUI } from './components/EscaletaUI.js?v=6';
+import { GanttUI } from './components/GanttUI.js?v=3';
+import { downloadPDF } from './utils/pdfGenerator.js?v=2';
 
 let currentProgram = new Program();
 let escaletaUI = null;
-let audioBoard = null;
 let sharedLibrary = null; // Se carga desde Firestore
 
 // Librería estática por defecto (rutas relativas)
@@ -80,12 +78,10 @@ document.addEventListener('DOMContentLoaded', async () => {
 
 async function initEditor(user) {
     // 2. Inicializar Componentes
-    audioBoard = new AudioBoard('audioBoard');
     const ganttUI = new GanttUI('ganttContainer');
     
     // Callback cuando la escaleta cambia para actualizar la botonera y el gantt (si está activo)
     const onEscaletaUpdate = () => {
-        audioBoard.updateBoard(currentProgram.blocks);
         if (document.body.classList.contains('gantt-active')) {
             ganttUI.render(currentProgram);
         }
@@ -94,125 +90,42 @@ async function initEditor(user) {
     escaletaUI = new EscaletaUI('escaletaList', currentProgram, onEscaletaUpdate);
 
 
-    // Lógica de grabación de Podcast
-    let mediaRecorder;
-    let recordedChunks = [];
-    let streamRef;
-
-    document.getElementById('btnRecordPodcast').addEventListener('click', async (e) => {
-        const btn = e.currentTarget;
-        
-        if (mediaRecorder && mediaRecorder.state === 'recording') {
-            // Parar grabación
-            mediaRecorder.stop();
-            btn.innerHTML = '<i class="fa-solid fa-circle-dot"></i> REC';
-            btn.classList.remove('live-active'); // Quitamos parpadeo si lo pusimos
-            return;
-        }
-
-        try {
-            await Swal.fire({
-                title: '🎙️ Modo de Grabación',
-                html: `
-                    <p style="text-align: left;">Para que la grabación capture tanto las <b>sintonías</b> como las <b>voces de texto</b> (las voces operan fuera del navegador):</p>
-                    <ol style="text-align: left;">
-                        <li>En la ventana que aparecerá, selecciona la pestaña superior <b>"Toda la pantalla"</b>.</li>
-                        <li>Haz clic en la imagen de tu pantalla.</li>
-                        <li>Marca abajo el interruptor <b>"Compartir audio del sistema"</b>.</li>
-                    </ol>
-                    <p style="text-align: left; color: #d32f2f; font-size: 0.9em;"><b>Aviso:</b> Si eliges "Pestaña de Chrome", las voces robóticas no se grabarán, solo la música.</p>
-                `,
-                icon: 'warning',
-                confirmButtonText: 'Entendido, ¡a grabar!'
-            });
-
-            const stream = await navigator.mediaDevices.getDisplayMedia({
-                video: { displaySurface: "browser" },
-                
-                audio: {
-                    echoCancellation: false,
-                    noiseSuppression: false,
-                    sampleRate: 44100
-                }
-            });
-
-            // Extraemos solo el audio
-            const audioTracks = stream.getAudioTracks();
-            if (audioTracks.length === 0) {
-                stream.getTracks().forEach(t => t.stop());
-                Swal.fire("Sin audio", "No has activado la casilla de 'Compartir audio de la pestaña'. Inténtalo de nuevo.", "error");
-                return;
-            }
-
-            const audioStream = new MediaStream(audioTracks);
-            streamRef = stream;
-
-            mediaRecorder = new MediaRecorder(audioStream, { mimeType: 'audio/webm' });
-            
-            mediaRecorder.ondataavailable = (event) => {
-                if (event.data.size > 0) {
-                    recordedChunks.push(event.data);
-                }
-            };
-            
-            mediaRecorder.onstop = () => {
-                const blob = new Blob(recordedChunks, { type: 'audio/webm' });
-                const url = URL.createObjectURL(blob);
-                const a = document.createElement('a');
-                a.style.display = 'none';
-                a.href = url;
-                a.download = (currentProgram.title || "Podcast") + ".webm";
-                document.body.appendChild(a);
-                a.click();
-                setTimeout(() => {
-                    document.body.removeChild(a);
-                    window.URL.revokeObjectURL(url);
-                }, 100);
-                recordedChunks = [];
-                if (streamRef) {
-                    streamRef.getTracks().forEach(t => t.stop());
-                }
-                
-                Swal.fire({
-                    title: '¡Podcast Guardado!',
-                    text: 'Se ha descargado el archivo .webm de tu podcast. Puedes reproducirlo en cualquier navegador o convertirlo a MP3 con un conversor online.',
-                    icon: 'success'
-                });
-            };
-
-            mediaRecorder.start();
-            btn.innerHTML = '<i class="fa-solid fa-stop"></i> STOP';
-            btn.classList.add('live-active'); // Usa el parpadeo de live-active
-            
-        } catch (err) {
-            console.error(err);
-            Swal.fire("Grabación cancelada", "No se pudo iniciar la captura de audio.", "warning");
-        }
-    });
 
 
-    // === MODO SÓLO LECTURA (Docente revisando el programa de un alumno) ===
+    // === MODO SÓLO LECTURA ===
     const urlParams = new URLSearchParams(window.location.search);
-    const isReadOnly = urlParams.get('readonly') === '1';
+    let isReadOnly = urlParams.get('readonly') === '1';
 
-    if (isReadOnly) {
-        document.title = '👁️ Revisión — ' + document.title;
+    window.applyReadOnlyMode = function(roleName = "Lector") {
+        document.title = `👁️ ${roleName} — ` + document.title;
 
-        // Banner aviso
+        // Quitar banner anterior si hay
+        const oldBanner = document.getElementById('ro-banner');
+        if (oldBanner) oldBanner.remove();
+
         const banner = document.createElement('div');
+        banner.id = 'ro-banner';
         banner.style.cssText = 'background:#1565c0; color:white; text-align:center; padding:8px; font-size:14px; font-weight:bold;';
-        banner.innerHTML = '<i class="fa-solid fa-eye"></i> Modo Supervisión (sólo lectura) — No puedes editar ni guardar este programa.';
+        banner.innerHTML = `<i class="fa-solid fa-eye"></i> Modo ${roleName} (sólo lectura) — Puedes reproducir el directo pero no guardar cambios.`;
         document.body.insertBefore(banner, document.body.firstChild);
 
-        // Ocultar botones de edición
-        const editBtns = ['btnSave', 'btnAddText', 'btnAddAudio', 'btnUploadDrive', 'btnLiveMode', 'btnShare', 'btnRecordPodcast'];
+        // Ocultar botones de edición en modo solo lectura
+        const editBtns = ['btnSave', 'btnAddText', 'btnAddAudio', 'btnUploadDrive', 'btnShare', 'btnOpenStudio'];
         editBtns.forEach(id => {
             const el = document.getElementById(id);
             if (el) el.style.display = 'none';
         });
 
-        // Deshabilitar auto-save apagando la callback
-        escaletaUI.onUpdateCallback = null;
+        // Deshabilitar auto-save
+        if (escaletaUI) escaletaUI.onUpdateCallback = null;
+        
+        // Deshabilitar Inputs de título
+        const pt = document.getElementById('programTitle');
+        if (pt) pt.readOnly = true;
+    };
+
+    if (isReadOnly) {
+        window.applyReadOnlyMode("Supervisión");
     }
 
     // Controles de Vistas
@@ -241,6 +154,13 @@ async function initEditor(user) {
             currentProgram = Program.fromFirestore(data);
             escaletaUI.program = currentProgram; // Reasignar
             document.getElementById('programTitle').value = currentProgram.title;
+            
+            // Check permissions based on authenticated user
+            if (user && currentProgram.ownerId !== user.uid) {
+                if (currentProgram.collaborators && currentProgram.collaborators[user.uid] === 'lector') {
+                    window.applyReadOnlyMode("Lector");
+                }
+            }
         }
     } else {
         currentProgram.ownerId = user.uid;
@@ -314,107 +234,18 @@ async function initEditor(user) {
         return window.availableVoices.find(v => v.voiceURI === uri) || window.availableVoices[0];
     };
 
-    // Modo Directo y Cronómetro
-    let timerInterval;
-    let timerSeconds = 0;
-    const timerDisplay = document.getElementById('timerDisplay');
-    const btnTimerPlay = document.getElementById('btnTimerPlay');
-    const liveTimer = document.getElementById('liveTimer');
-
-    document.getElementById('btnLiveMode').addEventListener('click', (e) => {
-        const isLive = document.body.classList.toggle('live-mode');
-        const btn = e.currentTarget;
-        const btnRecord = document.getElementById('btnRecordPodcast');
-        
-        if (isLive) {
-            btn.innerHTML = '<i class="fa-solid fa-pen"></i> Modo Edición';
-            btn.style.backgroundColor = '#607d8b';
-            escaletaUI.setSortable(false);
-            liveTimer.classList.remove('hidden');
-            btnRecord.style.display = 'flex';
-        } else {
-            btn.innerHTML = '<i class="fa-solid fa-tower-broadcast"></i> Modo Directo';
-            btn.style.backgroundColor = '#ff9800';
-            escaletaUI.setSortable(true);
-            liveTimer.classList.add('hidden');
-            btnRecord.style.display = 'none';
-        }
-    });
-
-    btnTimerPlay.addEventListener('click', () => {
-        if (timerInterval) {
-            clearInterval(timerInterval);
-            timerInterval = null;
-            btnTimerPlay.innerHTML = '<i class="fa-solid fa-play"></i>';
-            document.getElementById('onAirBadge').style.visibility = 'hidden';
-        } else {
-            if (timerSeconds === 0) {
-                // Iniciar cuenta atrás de 5 segundos
-                let countdown = 5;
-                let preTimer = null;
-                
-                Swal.fire({
-                    title: '¡Preparados!',
-                    html: '<div style="font-size: 4em; font-weight: bold; color: #ff9800;" id="countdownNumber">5</div><p>Comenzando emisión...</p>',
-                    showCancelButton: true,
-                    cancelButtonText: 'Cancelar',
-                    showConfirmButton: false,
-                    allowOutsideClick: false,
-                    didOpen: () => {
-                        const numberEl = document.getElementById('countdownNumber');
-                        preTimer = setInterval(() => {
-                            countdown--;
-                            if (countdown > 0) {
-                                numberEl.innerText = countdown;
-                            } else {
-                                clearInterval(preTimer);
-                                Swal.close();
-                            }
-                        }, 1000);
-                    },
-                    willClose: () => {
-                        if (preTimer) clearInterval(preTimer);
-                    }
-                }).then((result) => {
-                    if (result.dismiss === Swal.DismissReason.cancel) {
-                        // Cancelado
-                        return;
-                    }
-                    // Si termina la cuenta atrás, empieza
-                    startRealTimer();
-                });
-            } else {
-                startRealTimer();
-            }
-        }
-    });
-
-    function startRealTimer() {
-        btnTimerPlay.innerHTML = '<i class="fa-solid fa-pause"></i>';
-        document.getElementById('onAirBadge').style.visibility = 'visible';
-        timerInterval = setInterval(() => {
-            timerSeconds++;
-            const m = String(Math.floor(timerSeconds / 60)).padStart(2, '0');
-            const s = String(timerSeconds % 60).padStart(2, '0');
-            timerDisplay.innerText = `${m}:${s}`;
-            
-            // Highlight live blocks
-            escaletaUI.highlightLiveBlocks(timerSeconds);
-            audioBoard.highlightLiveBlocks(timerSeconds);
-        }, 1000);
-    }
-
-    document.getElementById('btnTimerReset').addEventListener('click', () => {
-        clearInterval(timerInterval);
-        timerInterval = null;
-        timerSeconds = 0;
-        timerDisplay.innerText = "00:00";
-        document.getElementById('onAirBadge').style.visibility = 'hidden';
-        btnTimerPlay.innerHTML = '<i class="fa-solid fa-play"></i>';
-    });
 
     document.getElementById('btnAddText').addEventListener('click', () => {
         escaletaUI.addBlock('text');
+    });
+
+    // === ABRIR ESTUDIO EN DIRECTO ===
+    document.getElementById('btnOpenStudio').addEventListener('click', () => {
+        if (!currentProgram.id) {
+            Swal.fire('Guarda primero', 'Guarda el programa antes de abrirlo en el Estudio.', 'warning');
+            return;
+        }
+        window.location.href = 'studio.html?id=' + currentProgram.id;
     });
 
     document.getElementById('btnAddAudio').addEventListener('click', () => {
@@ -445,9 +276,29 @@ async function initEditor(user) {
                     btn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> Subiendo...';
                     
                     // Usamos Firebase Storage en lugar de Drive
+                    // Ask for category before uploading
+                    const catResult = await Swal.fire({
+                        title: 'Categoría del audio',
+                        html: '<p style="margin-bottom:15px;">¿En qué canal del mezclador irá este audio?</p>',
+                        input: 'select',
+                        inputOptions: {
+                            'sintonia': '🎙️ Sintonía (cabecera / cierre)',
+                            'efectos': '⚡ Efecto de sonido',
+                            'musica': '🎵 Música de fondo',
+                        },
+                        inputValue: 'efectos',
+                        showCancelButton: true,
+                        confirmButtonText: 'Subir',
+                        confirmButtonColor: '#f06292'
+                    });
+                    if (!catResult.isConfirmed) {
+                        btn.innerHTML = '<i class="fa-solid fa-cloud-arrow-up"></i> Subir';
+                        return;
+                    }
+                    const chosenCategory = catResult.value;
                     const result = await cloudinaryService.uploadAudio(file);
                     
-                    window.addAudioWithTimeCalculation(file.name, result.url, 'efectos');
+                    window.addAudioWithTimeCalculation(file.name, result.url, chosenCategory);
                     
                     btn.innerHTML = '<i class="fa-solid fa-cloud-arrow-up"></i> Subir';
                 } catch (err) {
@@ -483,8 +334,67 @@ const btnShare = document.getElementById('btnShare');
 const closeShareModal = document.getElementById('closeShareModal');
 const btnConfirmShare = document.getElementById('btnConfirmShare');
 
+window.renderCollaborators = async function() {
+    const list = document.getElementById('collaboratorsList');
+    const loading = document.getElementById('collaboratorsLoading');
+    list.innerHTML = '';
+    loading.style.display = 'block';
+    
+    if (!currentProgram.collaborators || Object.keys(currentProgram.collaborators).length === 0) {
+        loading.style.display = 'none';
+        list.innerHTML = '<li style="color: #666; font-size: 13px; text-align: center;">No hay colaboradores aún.</li>';
+        return;
+    }
+    
+    const owner = await dbService.getUserProfile(currentProgram.ownerId);
+    let html = `<li style="display: flex; justify-content: space-between; align-items: center; padding: 8px; background: #f5f5f5; border-radius: 5px;">
+        <span style="font-size: 14px;"><b>${owner ? owner.email : 'Dueño'}</b> <span style="color:#888; font-size: 12px;">(Propietario)</span></span>
+    </li>`;
+
+    for (const [uid, role] of Object.entries(currentProgram.collaborators)) {
+        const user = await dbService.getUserProfile(uid);
+        if (user) {
+            html += `<li style="display: flex; justify-content: space-between; align-items: center; padding: 8px; border: 1px solid #eee; border-radius: 5px;">
+                <div style="display: flex; flex-direction: column;">
+                    <span style="font-size: 14px;"><b>${user.email}</b></span>
+                    <span style="font-size: 12px; color: #666; text-transform: capitalize;">${role}</span>
+                </div>
+                <div style="display: flex; gap: 5px;">
+                    <button class="btn btn-secondary btn-sm" onclick="changeCollaboratorRole('${uid}', '${role === 'editor' ? 'lector' : 'editor'}')" title="Cambiar a ${role === 'editor' ? 'Lector' : 'Editor'}" style="padding: 5px 8px; font-size: 12px; background: #e0e0e0; color: #333;"><i class="fa-solid fa-rotate"></i></button>
+                    <button class="btn btn-secondary btn-sm" onclick="removeCollaborator('${uid}')" title="Quitar acceso" style="padding: 5px 8px; font-size: 12px; background: #ffebee; color: #d32f2f;"><i class="fa-solid fa-trash"></i></button>
+                </div>
+            </li>`;
+        }
+    }
+    loading.style.display = 'none';
+    list.innerHTML = html;
+};
+
+window.changeCollaboratorRole = async function(uid, newRole) {
+    currentProgram.collaborators[uid] = newRole;
+    try {
+        await dbService.saveProgram(currentProgram.toFirestore());
+        window.renderCollaborators();
+    } catch(e) {
+        Swal.fire("Error", e.message, "error");
+    }
+};
+
+window.removeCollaborator = async function(uid) {
+    delete currentProgram.collaborators[uid];
+    try {
+        await dbService.saveProgram(currentProgram.toFirestore());
+        window.renderCollaborators();
+    } catch(e) {
+        Swal.fire("Error", e.message, "error");
+    }
+};
+
 if (btnShare) {
-    btnShare.onclick = () => shareModal.style.display = "block";
+    btnShare.onclick = () => {
+        shareModal.style.display = "block";
+        window.renderCollaborators();
+    };
 }
 if (closeShareModal) {
     closeShareModal.onclick = () => shareModal.style.display = "none";
@@ -500,11 +410,12 @@ if (btnConfirmShare) {
         const collaborator = await dbService.getUserByEmail(email);
         
         if (collaborator) {
+            if (!currentProgram.collaborators) currentProgram.collaborators = {};
             currentProgram.collaborators[collaborator.uid] = role;
             try {
                 await dbService.saveProgram(currentProgram.toFirestore());
-                Swal.fire("¡Compartido!", `Programa compartido con ${email} como ${role}`, "success");
-                shareModal.style.display = "none";
+                document.getElementById('shareEmail').value = "";
+                window.renderCollaborators();
             } catch (e) {
                 Swal.fire("Error", "Error al compartir: " + e.message, "error");
             }
@@ -512,7 +423,6 @@ if (btnConfirmShare) {
             Swal.fire("Usuario no encontrado", `No se encontró ningún usuario con el correo ${email}. Debe iniciar sesión en Radioescaleta al menos una vez.`, "warning");
         }
         btnConfirmShare.innerText = "Invitar";
-        document.getElementById('shareEmail').value = "";
     };
 }
 

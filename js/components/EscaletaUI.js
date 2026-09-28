@@ -182,75 +182,105 @@ export class EscaletaUI {
             contentContainer.style.display = 'flex';
             contentContainer.style.flexDirection = 'column';
             contentContainer.style.gap = '5px';
+            contentContainer.style.minWidth = '0';
+            contentContainer.style.overflow = 'hidden';
 
-            const input = document.createElement(block.type === 'text' ? 'textarea' : 'input');
-            input.className = 'block-content';
-            if (block.type === 'text') {
-                input.style.resize = 'vertical';
-                input.style.minHeight = '30px';
-                input.style.fontFamily = 'inherit';
-                input.style.padding = '5px';
-            } else {
-                input.type = 'text';
-            }
-            
-            let prefix = "";
+                        let prefix = "";
             if (block.type === 'audio') {
                 const audioIndex = this.program.blocks.filter(b => b.type === 'audio').findIndex(b => b.id === block.id);
                 if (audioIndex >= 0 && audioIndex < 9) {
                     prefix = `[${audioIndex + 1}] `;
                 }
             }
-            
-            input.value = prefix + (block.type === 'text' ? block.content : block.title);
-            
-            input.addEventListener('change', (e) => {
-                let val = e.target.value;
-                if (block.type === 'audio' && val.startsWith(prefix)) {
-                    val = val.substring(prefix.length);
-                }
-                
-                if (block.type === 'text') {
-                    block.content = val;
-                } else {
-                    block.title = val;
-                }
-                this.notifyUpdate();
-            });
-
-            contentContainer.appendChild(input);
 
             if (block.type === 'text') {
+                // === PREVIEW Y POPUP PARA TEXTO ===
+                const textPreview = document.createElement('div');
+                textPreview.className = 'block-content text-preview';
+                textPreview.style.cssText = 'padding: 8px; background: rgba(255,255,255,0.7); border: 1px solid rgba(0,0,0,0.2); border-radius: 5px; cursor: pointer; min-height: 38px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; min-width: 0; width: 100%; box-sizing: border-box; flex: 1; font-size: 13px; color: #333; transition: background 0.2s;';
+                
                 const helper = document.createElement('small');
                 helper.style.color = '#888';
                 helper.style.fontSize = '11px';
+                helper.style.marginTop = '4px';
                 
-                const updateHelper = () => {
-                    const words = input.value.trim().split(/\s+/).filter(w => w.length > 0).length;
+                const updateViewAndTime = () => {
+                    const txt = block.content || '✏️ Haz clic aquí para escribir el guión...';
+                    textPreview.innerText = txt;
+                    
+                    const words = (block.content || "").trim().split(/\s+/).filter(w => w.length > 0).length;
                     const sec = Math.round((words / 130) * 60);
+                    
                     import('../utils/timeUtils.js').then(module => {
                         helper.innerText = `Lectura est.: ${module.secondsToTime(sec)} (${words} palabras)`;
+                        const newEnd = module.secondsToTime(module.timeToSeconds(block.startTime) + sec);
+                        
+                        if (block.endTime !== newEnd && document.activeElement !== endInput) {
+                            block.endTime = newEnd;
+                            endInput.value = newEnd;
+                            updateDurationDisplay();
+                        }
                     });
                 };
                 
-                input.addEventListener('input', updateHelper);
-                input.addEventListener('blur', () => {
-                    const words = input.value.trim().split(/\s+/).filter(w => w.length > 0).length;
-                    if (words > 0) {
-                        const sec = Math.round((words / 130) * 60);
-                        import('../utils/timeUtils.js').then(module => {
-                            const startSec = module.timeToSeconds(block.startTime);
-                            block.endTime = module.secondsToTime(startSec + sec);
-                            endInput.value = block.endTime;
-                            endInput.style.borderColor = '#4caf50';
-                            updateDurationDisplay();
-                            this.notifyUpdate();
-                        });
+                updateViewAndTime();
+
+                textPreview.addEventListener('mouseover', () => {
+                    if (!document.body.classList.contains('live-mode') && !document.title.includes('👁️')) {
+                        textPreview.style.background = '#fff';
+                        textPreview.style.borderColor = '#00acc1';
                     }
                 });
+                textPreview.addEventListener('mouseout', () => {
+                    textPreview.style.background = 'rgba(255,255,255,0.7)';
+                    textPreview.style.borderColor = 'rgba(0,0,0,0.2)';
+                });
+
+                textPreview.addEventListener('click', () => {
+                    if (document.body.classList.contains('live-mode') || document.title.includes('👁️')) return;
+                    
+                    Swal.fire({
+                        title: 'Redactar Guión',
+                        input: 'textarea',
+                        inputValue: block.content || '',
+                        inputPlaceholder: 'Escribe aquí lo que se va a leer en antena...',
+                        inputAttributes: {
+                            rows: 15,
+                            style: 'font-size: 1.1em; line-height: 1.6; padding: 15px; resize: vertical;'
+                        },
+                        width: '800px',
+                        showCancelButton: true,
+                        confirmButtonText: '<i class="fa-solid fa-check"></i> Guardar',
+                        cancelButtonText: 'Cancelar',
+                        confirmButtonColor: '#00acc1'
+                    }).then((result) => {
+                        if (result.isConfirmed) {
+                            block.content = result.value;
+                            updateViewAndTime();
+                            this.notifyUpdate();
+                        }
+                    });
+                });
                 
-                updateHelper();
+                contentContainer.appendChild(textPreview);
                 contentContainer.appendChild(helper);
+
+            } else {
+                // === COMPORTAMIENTO ORIGINAL PARA AUDIO ===
+                const input = document.createElement('input');
+                input.className = 'block-content';
+                input.type = 'text';
+                input.value = prefix + block.title;
+                
+                input.addEventListener('change', (e) => {
+                    let val = e.target.value;
+                    if (val.startsWith(prefix)) {
+                        val = val.substring(prefix.length);
+                    }
+                    block.title = val;
+                    this.notifyUpdate();
+                });
+                contentContainer.appendChild(input);
             }
 
             if (block.type === 'audio') {
@@ -329,8 +359,8 @@ export class EscaletaUI {
                     if (window.speechSynthesis.speaking) {
                         window.speechSynthesis.cancel();
                         btnSpeak.innerHTML = '<i class="fa-solid fa-volume-high"></i>';
-                    } else if (input.value.trim() !== '') {
-                        const utterance = new SpeechSynthesisUtterance(input.value);
+                    } else if (block.content && block.content.trim() !== '') {
+                        const utterance = new SpeechSynthesisUtterance(block.content);
                         utterance.lang = 'es-ES'; // Castellano
                         if (typeof window.getVoiceByURI === 'function') {
                             const selectedVoice = window.getVoiceByURI(block.voiceURI);
@@ -353,6 +383,51 @@ export class EscaletaUI {
                     }
                 });
                 actions.appendChild(btnSpeak);
+            }
+
+            // === BOTÓN DE PRE-ESCUCHA PARA AUDIOS ===
+            if (block.type === 'audio' && block.audioUrl) {
+                const btnAudioPreview = document.createElement('button');
+                btnAudioPreview.innerHTML = '<i class="fa-solid fa-play"></i>';
+                btnAudioPreview.title = "Pre-escuchar audio";
+                btnAudioPreview.className = 'btn-speak btn-audio-preview'; // Reutilizamos clase css btn-speak
+                btnAudioPreview.style.marginRight = '5px';
+                
+                btnAudioPreview.addEventListener('click', () => {
+                    let globalPlayer = document.getElementById('globalAudioPlayer');
+                    
+                    // Si este mismo bloque ya está sonando, lo pausamos
+                    if (globalPlayer && !globalPlayer.paused && globalPlayer.dataset.currentBlock === block.id) {
+                        globalPlayer.pause();
+                        btnAudioPreview.innerHTML = '<i class="fa-solid fa-play"></i>';
+                        globalPlayer.dataset.currentBlock = '';
+                        return;
+                    }
+
+                    // Detener cualquier otra pre-escucha activa
+                    if (globalPlayer && !globalPlayer.paused) {
+                        globalPlayer.pause();
+                    }
+                    // Resetear todos los iconos a play
+                    document.querySelectorAll('.btn-audio-preview').forEach(b => {
+                        b.innerHTML = '<i class="fa-solid fa-play"></i>';
+                    });
+
+                    // Reproducir el nuevo
+                    if (globalPlayer) {
+                        globalPlayer.src = block.audioUrl;
+                        globalPlayer.dataset.currentBlock = block.id;
+                        globalPlayer.play().catch(e => console.error("Error reproduciendo", e));
+                        
+                        btnAudioPreview.innerHTML = '<i class="fa-solid fa-stop"></i>';
+                        
+                        globalPlayer.onended = () => {
+                            btnAudioPreview.innerHTML = '<i class="fa-solid fa-play"></i>';
+                            globalPlayer.dataset.currentBlock = '';
+                        };
+                    }
+                });
+                actions.appendChild(btnAudioPreview);
             }
             
             const btnDelete = document.createElement('button');

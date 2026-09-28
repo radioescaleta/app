@@ -1,6 +1,6 @@
 .editor-layout {
   display: grid;
-  grid-template-columns: 1fr 300px;
+  grid-template-columns: minmax(0, 1fr) 300px;
   gap: 20px;
   height: calc(100vh - 130px);
   overflow: hidden;
@@ -9,7 +9,7 @@
 
 @media (max-width: 768px) {
   .editor-layout {
-    grid-template-columns: 1fr;
+    grid-template-columns: minmax(0, 1fr);
     height: auto;
   }
 }
@@ -72,6 +72,7 @@
 /* Escaleta (Timeline) */
 .escaleta-container {
   flex-grow: 1;
+  min-width: 0;
   background-color: var(--bg-color);
   border-radius: 10px;
   padding: 20px;
@@ -104,27 +105,42 @@
 }
 
 .escaleta-block.text {
-  background-color: var(--block-text-bg);
+  background-color: #b2ebf2;
 }
 
 .escaleta-block.audio-sintonia {
-  background-color: var(--block-audio-bg);
-  color: white;
+  background-color: #f8bbd0;
+  color: #333;
 }
 
 .escaleta-block.audio-sintonia input[type="text"] {
-  color: white;
+  color: #333;
 }
 
-.escaleta-block.audio-cortinilla {
-  background-color: var(--block-audio-fx-bg);
-  color: white;
+.escaleta-block.audio-efectos {
+  background-color: #ffe0b2;
+  color: #333;
 }
 
-.escaleta-block.audio-cortinilla input[type="text"] {
-  color: white;
+.escaleta-block.audio-efectos input[type="text"] {
+  color: #333;
 }
 
+.escaleta-block.audio-musica {
+  background-color: #c8e6c9;
+  color: #333;
+}
+.escaleta-block.audio-musica input[type="text"] {
+  color: #333;
+}
+
+
+.block-actions {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    flex-shrink: 0;
+}
 .block-actions button {
   background: none;
   border: none;
@@ -264,7 +280,7 @@ body.live-mode .sidebar {
 }
 
 body.live-mode .editor-layout {
-  grid-template-columns: 1fr;
+  grid-template-columns: minmax(0, 1fr);
 }
 
 body.live-mode .block-actions .btn-delete {
@@ -379,7 +395,7 @@ body.gantt-active .gantt-container {
     min-height: 250px;
     background: #fafafa;
     background-image: linear-gradient(90deg, #f0f0f0 1px, transparent 1px);
-    background-size: 30px 100%; /* Corresponde a 10 segundos en pixelesPerSecond=3 */
+    background-size: 100px 100%; /* Corresponde a 5 segundos en pixelesPerSecond=20 */
     border: 1px solid #ccc;
     border-radius: 5px;
 }
@@ -431,9 +447,9 @@ body.gantt-active .gantt-container {
     align-items: center;
 }
 
-.gantt-bar.text { background-color: var(--block-text-bg); }
-.gantt-bar.audio-sintonia { background-color: var(--block-audio-bg); color: white; }
-.gantt-bar.audio-cortinilla, .gantt-bar.audio-efectos { background-color: var(--block-audio-fx-bg); color: white; }
+.gantt-bar.text { background-color: #b2ebf2; color: #333; }
+.gantt-bar.audio-sintonia { background-color: #f06292; color: white; }
+.gantt-bar.audio-efectos { background-color: #ff9800; color: white; }
 .gantt-bar.audio-musica { background-color: #4caf50; color: white; }
 
 /* Nuevos estilos Botonera */
@@ -575,3 +591,101 @@ body.live-mode .btn-title {
 #onAirBadge {
     animation: pulse-red 2s infinite;
 }
+
+/* === LIVE MODE 3-ROW LAYOUT === */
+
+/* Override main editor-layout so sidebar disappears */
+body.live-mode .editor-layout {
+    grid-template-columns: minmax(0, 1fr) !important;
+    height: calc(100vh - 80px) !important;
+    overflow: hidden !important;
+}
+
+/* main-area becomes a 3-row flex column */
+body.live-mode .main-area {
+    display: flex !important;
+    flex-direction: column !important;
+    height: 100% !important;
+    overflow: hidden !important;
+    gap: 8px !important;
+}
+
+/* Row 1: chrono + mixer side by side, max 22% height */
+#live-top-row {
+    display: flex;
+    flex-direction: row;
+    align-items: stretch;
+    gap: 15px;
+    max-height: 22vh;
+    flex-shrink: 0;
+    overflow: hidden;
+}
+
+/* Chrono block inside top row */
+#live-top-row #liveTimer {
+    flex-shrink: 0;
+    margin-bottom: 0 !important;
+    padding: 10px 20px !important;
+    box-sizing: border-box;
+    display: flex !important;
+    flex-direction: row !important;
+    align-items: center !important;
+    gap: 20px;
+}
+
+#live-top-row #liveTimer > div {
+    flex-direction: row !important;
+    gap: 20px !important;
+}
+
+body.live-mode #timerDisplay {
+    font-size: 3em !important;
+}
+
+/* Mixer inside top row */
+#live-top-row #live-mixer {
+    flex: 1;
+    margin: 0 !important;
+    overflow-x: auto;
+    overflow-y: hidden;
+    display: flex;
+    flex-direction: column;
+    box-sizing: border-box;
+    align-self: stretch;
+}
+
+#live-top-row #live-mixer > div:last-child {
+    flex: 1;
+    display: flex;
+    align-items: center;
+}
+
+/* Row 2: Botonera, max 20% height, scrollable horizontally */
+#live-board-row {
+    max-height: 20vh;
+    flex-shrink: 0;
+    overflow-y: hidden;
+    overflow-x: auto;
+}
+
+/* Row 3: Escaleta, takes remaining space, scrollable */
+#live-escaleta-row {
+    flex: 1;
+    min-height: 0;
+    overflow-y: auto;
+    overflow-x: hidden;
+}
+
+#live-escaleta-row .escaleta-container {
+    height: 100%;
+    overflow-y: auto;
+}
+
+/* Hide sidebar, view tabs, gantt in live mode */
+body.live-mode .sidebar,
+body.live-mode #btnViewList,
+body.live-mode #btnViewGantt,
+body.live-mode .gantt-container {
+    display: none !important;
+}
+

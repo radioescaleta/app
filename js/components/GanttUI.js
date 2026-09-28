@@ -5,7 +5,28 @@ export class GanttUI {
     constructor(containerId) {
         this.container = document.getElementById(containerId);
         // Escala: 1 segundo = 3 píxeles
-        this.pixelsPerSecond = 3;
+        this.pixelsPerSecond = 20;
+    }
+
+    calculateLanes(blocks) {
+        blocks.sort((a, b) => a.startSec - b.startSec);
+        const lanes = [];
+        blocks.forEach(b => {
+            let placed = false;
+            for (let i = 0; i < lanes.length; i++) {
+                if (lanes[i] <= b.startSec) {
+                    b.lane = i;
+                    lanes[i] = b.startSec + b.durSec;
+                    placed = true;
+                    break;
+                }
+            }
+            if (!placed) {
+                b.lane = lanes.length;
+                lanes.push(b.startSec + b.durSec);
+            }
+        });
+        return lanes.length;
     }
 
     render(program) {
@@ -52,7 +73,7 @@ export class GanttUI {
         // Dibujar regla de tiempo (cada 10 segundos)
         const timeline = document.createElement('div');
         timeline.className = 'gantt-timeline';
-        for (let s = 0; s <= maxTime; s += 10) {
+        for (let s = 0; s <= maxTime; s += 5) {
             const mark = document.createElement('div');
             mark.className = 'gantt-mark';
             mark.style.left = `${s * this.pixelsPerSecond}px`;
@@ -65,16 +86,20 @@ export class GanttUI {
         ganttCanvas.appendChild(timeline);
 
         // Track 1 (Principal)
+        const mainLanes = this.calculateLanes(mainTrack);
         const track1 = document.createElement('div');
         track1.className = 'gantt-track main-track';
         track1.innerHTML = '<div class="track-label">Voz y Efectos</div>';
+        if (mainLanes > 0) track1.style.height = `${30 + (mainLanes * 45) + 10}px`;
         mainTrack.forEach(b => this.createBar(b, track1));
         ganttCanvas.appendChild(track1);
 
         // Track 2 (Fondo)
+        const bgLanes = this.calculateLanes(bgTrack);
         const track2 = document.createElement('div');
         track2.className = 'gantt-track bg-track';
         track2.innerHTML = '<div class="track-label">Música de fondo</div>';
+        if (bgLanes > 0) track2.style.height = `${30 + (bgLanes * 45) + 10}px`;
         bgTrack.forEach(b => this.createBar(b, track2));
         ganttCanvas.appendChild(track2);
 
@@ -91,6 +116,9 @@ export class GanttUI {
         
         bar.style.left = `${block.startSec * this.pixelsPerSecond}px`;
         bar.style.width = `${block.durSec * this.pixelsPerSecond}px`;
+        if (block.lane !== undefined) {
+            bar.style.top = `${30 + (block.lane * 45)}px`;
+        }
         
         const text = block.type === 'text' ? block.content : block.title;
         bar.innerText = text;

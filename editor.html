@@ -8,7 +8,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Editor - Radioescaleta</title>
     <link rel="stylesheet" href="./css/common.css?v=12">
-    <link rel="stylesheet" href="./css/editor.css?v=6">
+    <link rel="stylesheet" href="./css/editor.css?v=12">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     
     <!-- Librerías Externas -->
@@ -47,7 +47,7 @@
         <div id="headerControls" class="header-controls" style="display: flex; align-items: center; gap: 10px;">
             <button id="btnShare" class="btn btn-secondary" style="background-color: #9c27b0;"><i class="fa-solid fa-share-nodes"></i> Compartir</button>
             
-            <button id="btnLiveMode" class="btn" style="background-color: #ff9800; color: white;"><i class="fa-solid fa-tower-broadcast"></i> Modo Directo</button>
+            <button id="btnOpenStudio" class="btn" style="background-color: #ff9800; color: white;" title="Abrir el Estudio en Directo con esta escaleta"><i class="fa-solid fa-tower-broadcast"></i> Abrir Estudio</button>
             <button id="btnSave" class="btn btn-secondary"><i class="fa-solid fa-save"></i> Guardar</button>
         </div>
             
@@ -72,10 +72,6 @@
                     </div>
                     <button id="btnRecordPodcast" class="btn" style="display: none; background: #d32f2f; color: white; padding: 10px 25px; border-radius: 30px; font-weight: bold; font-size: 1.5em; align-items: center; justify-content: center; gap: 10px; margin-left: 20px; box-shadow: 0 4px 6px rgba(0,0,0,0.2); transition: all 0.3s;" title="Grabar todo lo que suena en esta pestaña"><i class="fa-solid fa-circle-dot"></i> REC</button>
                 </div>
-            </div>
-            <div class="botonera" id="audioBoard">
-                <h3>Botonera de audios</h3>
-                <!-- Los botones de audio se generarán aquí -->
             </div>
 
             <!-- Controles de Vista -->
@@ -186,21 +182,29 @@
         </div>
     </div>
 
-    <!-- Modal Compartir -->
+        <!-- Modal Compartir -->
     <div id="shareModal" class="modal">
-        <div class="modal-content" style="max-width: 400px;">
+        <div class="modal-content" style="max-width: 450px;">
             <span class="close-modal" id="closeShareModal">&times;</span>
-            <h2>Compartir Programa</h2>
-            <p style="margin-top: 10px; font-size: 14px;">Añade el correo de otro usuario (que ya haya iniciado sesión alguna vez en Radioescaleta) para colaborar.</p>
+            <h2><i class="fa-solid fa-share-nodes"></i> Compartir Programa</h2>
+            <p style="margin-top: 10px; font-size: 14px; color: #555;">Añade el correo de otro usuario (que ya haya iniciado sesión alguna vez) para colaborar.</p>
             
-            <div style="margin-top: 20px; display: flex; flex-direction: column; gap: 10px;">
-                <input type="email" id="shareEmail" placeholder="Correo del alumno o profesor" style="padding: 10px; border-radius: 5px; border: 1px solid #ccc;">
-                <select id="shareRole" style="padding: 10px; border-radius: 5px; border: 1px solid #ccc;">
-                    <option value="editor">Editor (Puede modificar)</option>
-                    <option value="lector">Lector (Solo ver y modo directo)</option>
+            <div style="margin-top: 15px; display: flex; gap: 10px;">
+                <input type="email" id="shareEmail" placeholder="Correo del usuario..." style="flex: 1; padding: 10px; border-radius: 5px; border: 1px solid #ccc;">
+                <select id="shareRole" style="padding: 10px; border-radius: 5px; border: 1px solid #ccc; width: 130px;">
+                    <option value="editor">Editor</option>
+                    <option value="lector">Lector</option>
                 </select>
-                <button id="btnConfirmShare" class="btn btn-primary" style="background-color: #9c27b0;">Invitar</button>
             </div>
+            <button id="btnConfirmShare" class="btn btn-primary" style="background-color: #9c27b0; width: 100%; margin-top: 10px;">Invitar</button>
+            
+            <hr style="margin: 20px 0; border: 0; border-top: 1px solid #eee;">
+            
+            <h3 style="font-size: 16px; margin-bottom: 15px;">Usuarios con acceso</h3>
+            <div id="collaboratorsLoading" style="text-align: center; font-size: 14px; color: #888;">Cargando...</div>
+            <ul id="collaboratorsList" style="list-style: none; padding: 0; margin: 0; display: flex; flex-direction: column; gap: 10px;">
+                <!-- Lista de colaboradores cargada dinámicamente -->
+            </ul>
         </div>
     </div>
 
@@ -227,7 +231,7 @@
     <audio id="globalAudioPlayer" style="display:none;"></audio>
 
     <!-- Scripts (Módulos JS) -->
-    <script type="module" src="./js/editor.js?v=32"></script>
+    <script type="module" src="./js/editor.js?v=45"></script>
     <div id="toastMessage" style="visibility: hidden; min-width: 250px; background-color: #333; color: #fff; text-align: center; border-radius: 5px; padding: 16px; position: fixed; z-index: 2000; left: 50%; bottom: 30px; transform: translateX(-50%); opacity: 0; transition: opacity 0.3s, visibility 0.3s;">Guardado correctamente</div>
 </body>
 </html>

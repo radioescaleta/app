@@ -25,6 +25,33 @@ export function downloadPDF(elementId, filename = "escaleta.pdf") {
         input.parentNode.replaceChild(span, input);
     });
 
+    // Mejorar aspecto de los bloques para impresión
+    const blocks = clone.querySelectorAll('.escaleta-block');
+    blocks.forEach(block => {
+        block.style.boxShadow = 'none';
+        block.style.border = '1px solid #ddd';
+        block.style.backgroundColor = '#ffffff';
+        block.style.marginBottom = '15px';
+        block.style.pageBreakInside = 'avoid';
+    });
+
+    // Formatear los textos largos (guiones) para que se vean enteros y elegantes
+    const textPreviews = clone.querySelectorAll('.text-preview');
+    textPreviews.forEach(div => {
+        div.style.whiteSpace = 'pre-wrap';
+        div.style.overflow = 'visible';
+        div.style.textOverflow = 'clip';
+        div.style.background = 'transparent';
+        div.style.border = 'none';
+        div.style.borderLeft = '4px solid #00acc1';
+        div.style.padding = '5px 0 5px 15px';
+        div.style.fontStyle = 'italic';
+        div.style.fontSize = '14px';
+        div.style.lineHeight = '1.6';
+        div.style.color = '#333';
+        div.style.marginTop = '10px';
+    });
+
     // Eliminar botones de acción
     const actions = clone.querySelectorAll('.block-actions');
     actions.forEach(a => a.remove());

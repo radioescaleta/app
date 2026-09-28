@@ -1,0 +1,412 @@
+/* css/studio.css — Estudio en Directo */
+
+/* === LAYOUT === */
+body.studio-body {
+    display: flex;
+    flex-direction: column;
+    height: 100vh;
+    overflow: hidden;
+    padding-bottom: 0; /* no footer padding in studio */
+}
+
+.studio-layout {
+    display: flex;
+    flex-direction: column;
+    flex: 1;
+    overflow: hidden;
+    padding: 10px;
+    gap: 8px;
+    min-height: 0;
+}
+
+/* === ROW 1: Chronometer + Mixer (max 22vh) === */
+#studio-top-row {
+    display: flex;
+    flex-direction: row;
+    align-items: stretch;
+    gap: 12px;
+    max-height: 22vh;
+    flex-shrink: 0;
+    overflow: hidden;
+}
+
+/* Chrono panel */
+#studioTimer {
+    display: flex;
+    flex-direction: row;
+    align-items: center;
+    gap: 20px;
+    background: #fff3e0;
+    border: 3px solid #ff9800;
+    border-radius: 12px;
+    padding: 10px 20px;
+    flex-shrink: 0;
+}
+
+#studioTimerDisplay {
+    font-size: 3.5em;
+    font-weight: bold;
+    font-family: monospace;
+    color: #333;
+    line-height: 1;
+}
+
+#onAirBadge {
+    background: #f44336;
+    color: white;
+    padding: 6px 16px;
+    border-radius: 20px;
+    font-weight: bold;
+    font-size: 1.2em;
+    letter-spacing: 2px;
+    box-shadow: 0 0 10px rgba(244,67,54,0.5);
+    visibility: hidden;
+}
+
+#onAirBadge.visible {
+    visibility: visible;
+}
+
+.timer-controls {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    align-items: center;
+}
+
+.btn-timer-play {
+    width: 56px;
+    height: 56px;
+    border-radius: 50%;
+    background: #4caf50;
+    color: white;
+    border: none;
+    font-size: 22px;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    box-shadow: 0 4px 6px rgba(0,0,0,0.2);
+    transition: background 0.2s;
+}
+.btn-timer-play:hover { background: #388e3c; }
+
+.btn-timer-reset {
+    width: 36px;
+    height: 36px;
+    border-radius: 50%;
+    background: #9e9e9e;
+    color: white;
+    border: none;
+    font-size: 14px;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.2);
+}
+.btn-timer-reset:hover { background: #757575; }
+
+.btn-rec {
+    background: #d32f2f;
+    color: white;
+    padding: 8px 20px;
+    border-radius: 25px;
+    font-weight: bold;
+    font-size: 1.3em;
+    border: none;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    box-shadow: 0 4px 6px rgba(0,0,0,0.2);
+    transition: all 0.3s;
+}
+.btn-rec:hover { background: #b71c1c; }
+
+/* Mixer panel */
+#studio-mixer {
+    flex: 1;
+    background: #1a1a2e;
+    border-radius: 12px;
+    padding: 10px 15px;
+    overflow-x: auto;
+    overflow-y: hidden;
+    display: flex;
+    flex-direction: column;
+    min-width: 0;
+}
+
+#studio-mixer .mixer-title {
+    color: #eee;
+    font-size: 11px;
+    font-weight: bold;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+    margin-bottom: 8px;
+}
+
+#studio-mixer .mixer-channels {
+    display: flex;
+    gap: 12px;
+    align-items: flex-end;
+    flex: 1;
+}
+
+.mixer-channel {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 4px;
+    min-width: 50px;
+    border-radius: 8px;
+    padding: 8px 6px;
+    background: #16213e;
+    box-sizing: border-box;
+}
+
+.mixer-channel.master {
+    background: #0f3460;
+    border: 1px solid #f06292;
+}
+
+.mixer-channel .ch-vol {
+    font-size: 11px;
+    font-weight: bold;
+    font-family: monospace;
+    color: #f06292;
+}
+
+.mixer-channel input[type=range] {
+    writing-mode: vertical-lr;
+    direction: rtl;
+    width: 28px;
+    height: 75px;
+    accent-color: #f06292;
+    cursor: pointer;
+}
+
+.mixer-channel .ch-name {
+    font-size: 10px;
+    text-align: center;
+    color: #aaa;
+    line-height: 1.2;
+}
+
+.mixer-channel.master .ch-name {
+    color: #f06292;
+    font-weight: bold;
+}
+
+/* === ROW 2: Botonera (max 20vh) === */
+#studio-board-row {
+    max-height: 20vh;
+    flex-shrink: 0;
+    background: #fff3e0;
+    border: 2px solid #ffb74d;
+    border-radius: 10px;
+    padding: 10px 15px;
+    overflow-y: hidden;
+    overflow-x: auto;
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    flex-wrap: nowrap;
+}
+
+#studio-board-row h3 {
+    white-space: nowrap;
+    font-size: 14px;
+    color: #e65100;
+    margin: 0;
+    flex-shrink: 0;
+}
+
+.audio-buttons-container {
+    display: flex;
+    gap: 12px;
+    flex-wrap: nowrap;
+    align-items: center;
+}
+
+/* === Audio Buttons === */
+.audio-btn-wrapper {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 5px;
+    width: 80px;
+}
+
+.audio-btn {
+    width: 64px;
+    height: 64px;
+    border-radius: 50%;
+    border: none;
+    font-size: 24px;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    position: relative;
+    transition: transform 0.1s;
+    color: white;
+    background: #f06292;
+    box-shadow: 0 3px 6px rgba(0,0,0,0.2);
+}
+
+.audio-btn.secondary { background: #00acc1; }
+.audio-btn.text-trigger-btn { background: #00acc1; color: white; }
+.audio-btn:active { transform: scale(0.9); }
+
+.btn-title {
+    font-size: 10px;
+    text-align: center;
+    line-height: 1.2;
+    color: #444;
+    word-wrap: break-word;
+    max-width: 100%;
+    font-weight: 500;
+}
+
+.shortcut-badge {
+    position: absolute;
+    top: -5px;
+    right: -5px;
+    background: #333;
+    color: white;
+    border-radius: 50%;
+    width: 20px;
+    height: 20px;
+    font-size: 11px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-weight: bold;
+}
+
+@keyframes pulse-orange {
+    0% { box-shadow: 0 0 0 0 rgba(255,152,0,0.7); }
+    70% { box-shadow: 0 0 0 10px rgba(255,152,0,0); }
+    100% { box-shadow: 0 0 0 0 rgba(255,152,0,0); }
+}
+
+.live-active {
+    box-shadow: 0 0 10px #ff9800, inset 0 0 10px rgba(255,152,0,0.1) !important;
+    border: 2px solid #ff9800 !important;
+    animation: pulse-orange 2s infinite;
+}
+
+/* === ROW 3: Escaleta read-only (fills remaining space) === */
+#studio-escaleta-row {
+    flex: 1;
+    min-height: 0;
+    overflow-y: auto;
+    overflow-x: hidden;
+    background: #f5f5f5;
+    border-radius: 10px;
+    padding: 15px;
+}
+
+/* Read-only escaleta blocks */
+.escaleta-block {
+    padding: 15px;
+    border-radius: 20px;
+    color: #333;
+    display: flex;
+    align-items: flex-start;
+    gap: 15px;
+    margin-bottom: 10px;
+    cursor: default;
+    user-select: none;
+    position: relative;
+}
+
+.escaleta-block.text { background-color: #b2ebf2; }
+.escaleta-block.audio.sintonia { background-color: #f8bbd0; }
+.escaleta-block.audio.efectos { background-color: #ffe0b2; }
+.escaleta-block.audio.musica { background-color: #c8e6c9; }
+
+.escaleta-block.live-active {
+    box-shadow: 0 0 15px rgba(255,152,0,0.7) !important;
+    border: 2px solid #ff9800 !important;
+}
+
+.block-time-badge {
+    font-size: 12px;
+    font-weight: bold;
+    color: #555;
+    white-space: nowrap;
+    flex-shrink: 0;
+    background: rgba(255,255,255,0.6);
+    padding: 3px 8px;
+    border-radius: 8px;
+}
+
+.block-content-text {
+    font-size: 14px;
+    flex: 1;
+    font-weight: 500;
+}
+
+.block-content-preview {
+    font-size: 13px;
+    flex: 1;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    opacity: 0.8;
+    cursor: pointer;
+}
+
+.block-content-preview:hover {
+    opacity: 1;
+    text-decoration: underline;
+}
+
+@keyframes pulse-red {
+    0% { transform: scale(1); opacity: 1; }
+    50% { transform: scale(1.05); opacity: 0.85; }
+    100% { transform: scale(1); opacity: 1; }
+}
+
+#onAirBadge.visible {
+    animation: pulse-red 1.5s infinite;
+}
+
+/* === ROW 2.5: Text Reader Inline Panel === */
+#studio-text-reader-row {
+    background: #e0f7fa;
+    border: 2px solid #00acc1;
+    border-radius: 10px;
+    padding: 10px 15px;
+    flex-shrink: 0;
+    max-height: 25vh;
+    display: flex;
+    flex-direction: column;
+    animation: fadeInDown 0.3s ease-out;
+}
+@keyframes fadeInDown {
+    from { opacity: 0; transform: translateY(-10px); }
+    to { opacity: 1; transform: translateY(0); }
+}
+.text-reader-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    border-bottom: 1px solid #b2ebf2;
+    padding-bottom: 8px;
+}
+#textReaderContent {
+    flex: 1;
+    min-height: 0;
+    overflow-y: auto;
+    margin-top: 10px;
+    padding-left: 10px;
+    border-left: 4px solid #00acc1;
+    font-family: Georgia, serif;
+    font-size: 1.25em;
+    line-height: 1.6;
+    white-space: pre-wrap;
+    color: #333;
+}
