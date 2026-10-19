@@ -195,6 +195,7 @@ class DbService {
     async saveProgram(programData) {
         if (!db) {
             const programs = JSON.parse(localStorage.getItem('demoPrograms') || '[]');
+            if (!programData.id) programData.id = 'demo_' + Date.now();
             const index = programs.findIndex(p => p.id === programData.id);
             if (index >= 0) programs[index] = programData;
             else programs.push(programData);

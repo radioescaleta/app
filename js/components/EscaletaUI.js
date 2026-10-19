@@ -14,6 +14,10 @@ export class EscaletaUI {
         if (typeof Sortable !== 'undefined') {
             this.sortable = Sortable.create(this.container, {
                 animation: 150,
+                scroll: true,
+                scrollSensitivity: 50,
+                scrollSpeed: 15,
+                bubbleScroll: true,
                 onEnd: (evt) => {
                     this.updateOrderFromDOM();
                 }
@@ -41,6 +45,17 @@ export class EscaletaUI {
             this.program.addBlock(block);
             this.render();
             this.notifyUpdate();
+
+            // Auto-scroll al nuevo bloque para que sea visible de inmediato
+            requestAnimationFrame(() => {
+                const escaletaContainer = document.getElementById('escaletaContainer');
+                if (escaletaContainer) {
+                    escaletaContainer.scrollTo({
+                        top: escaletaContainer.scrollHeight,
+                        behavior: 'smooth'
+                    });
+                }
+            });
         }
     }
 

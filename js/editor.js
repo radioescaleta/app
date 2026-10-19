@@ -4,13 +4,33 @@ import { cloudinaryService } from './services/cloudinaryService.js';
 import { setupUserProfile } from './utils/profileUI.js?v=12';
 import { dbService } from './services/dbService.js?v=6';
 import { Program } from './models/Program.js';
-import { EscaletaUI } from './components/EscaletaUI.js?v=6';
+import { EscaletaUI } from './components/EscaletaUI.js?v=7';
 import { GanttUI } from './components/GanttUI.js?v=3';
 import { downloadPDF } from './utils/pdfGenerator.js?v=2';
 
 let currentProgram = new Program();
 let escaletaUI = null;
 let sharedLibrary = null; // Se carga desde Firestore
+let hasUnsavedChanges = false;
+let isInitialized = false;
+let urlParams = new URLSearchParams(window.location.search);
+
+async function saveCurrentProgram() {
+    const titleVal = document.getElementById('programTitle')?.value?.trim();
+    if (titleVal) {
+        currentProgram.title = titleVal;
+    }
+    const savedId = await dbService.saveProgram(currentProgram.toFirestore());
+    if (savedId) {
+        currentProgram.id = savedId;
+        hasUnsavedChanges = false;
+        if (!urlParams.has('id') || urlParams.get('id') !== savedId) {
+            urlParams.set('id', savedId);
+            window.history.replaceState({}, '', `?id=${savedId}`);
+        }
+    }
+    return savedId;
+}
 
 // Librería estática por defecto (rutas relativas)
 const defaultLibrary = {
@@ -82,6 +102,9 @@ async function initEditor(user) {
     
     // Callback cuando la escaleta cambia para actualizar la botonera y el gantt (si está activo)
     const onEscaletaUpdate = () => {
+        if (isInitialized) {
+            hasUnsavedChanges = true;
+        }
         if (document.body.classList.contains('gantt-active')) {
             ganttUI.render(currentProgram);
         }
@@ -93,7 +116,7 @@ async function initEditor(user) {
 
 
     // === MODO SÓLO LECTURA ===
-    const urlParams = new URLSearchParams(window.location.search);
+    urlParams = new URLSearchParams(window.location.search);
     let isReadOnly = urlParams.get('readonly') === '1';
 
     window.applyReadOnlyMode = function(roleName = "Lector") {
@@ -169,10 +192,16 @@ async function initEditor(user) {
     escaletaUI.render();
     onEscaletaUpdate();
 
+    isInitialized = true;
+    hasUnsavedChanges = false;
+
     // 4. Configurar Event Listeners UI
     const titleInput = document.getElementById('programTitle');
     titleInput.addEventListener('input', (e) => {
         currentProgram.title = e.target.value;
+        if (isInitialized) {
+            hasUnsavedChanges = true;
+        }
     });
     titleInput.addEventListener('keypress', (e) => {
         if (e.key === 'Enter') {
@@ -195,14 +224,17 @@ async function initEditor(user) {
 
     document.getElementById('btnSave').addEventListener('click', async () => {
         try {
-            await dbService.saveProgram(currentProgram.toFirestore());
+            await saveCurrentProgram();
             showToast("Programa guardado correctamente");
-            // Si era nuevo, añadir ID a la URL para no crear copias en futuros guardados
-            if (!urlParams.has('id')) {
-                window.history.replaceState({}, '', `?id=${currentProgram.id}`);
-            }
         } catch (e) {
             showToast("Error al guardar: " + e.message);
+        }
+    });
+
+    window.addEventListener('beforeunload', (e) => {
+        if (hasUnsavedChanges) {
+            e.preventDefault();
+            e.returnValue = '';
         }
     });
 
@@ -240,11 +272,80 @@ async function initEditor(user) {
     });
 
     // === ABRIR ESTUDIO EN DIRECTO ===
-    document.getElementById('btnOpenStudio').addEventListener('click', () => {
+    document.getElementById('btnOpenStudio').addEventListener('click', async () => {
+        // 1. Si el programa nunca se ha guardado, ofrecer guardar y entrar al Estudio
         if (!currentProgram.id) {
-            Swal.fire('Guarda primero', 'Guarda el programa antes de abrirlo en el Estudio.', 'warning');
+            const result = await Swal.fire({
+                title: 'Guarda primero',
+                text: 'Guarda el programa antes de abrirlo en el Estudio. ¿Quieres guardarlo ahora y entrar?',
+                icon: 'warning',
+                showCancelButton: true,
+                confirmButtonText: '<i class="fa-solid fa-floppy-disk"></i> Guardar y entrar al Estudio',
+                cancelButtonText: 'Cancelar',
+                confirmButtonColor: '#ff9800'
+            });
+
+            if (result.isConfirmed) {
+                try {
+                    Swal.fire({
+                        title: 'Guardando...',
+                        text: 'Preparando el Estudio en Directo...',
+                        allowOutsideClick: false,
+                        didOpen: () => {
+                            Swal.showLoading();
+                        }
+                    });
+                    const savedId = await saveCurrentProgram();
+                    hasUnsavedChanges = false;
+                    window.location.href = 'studio.html?id=' + savedId;
+                } catch (e) {
+                    Swal.fire('Error', 'Error al guardar el programa: ' + e.message, 'error');
+                }
+            }
             return;
         }
+
+        // 2. Si el programa ya tiene ID pero hay cambios pendientes sin guardar
+        if (hasUnsavedChanges) {
+            const result = await Swal.fire({
+                title: 'Cambios sin guardar',
+                text: 'Tienes cambios sin guardar en la escaleta. ¿Deseas guardarlos antes de abrir el Estudio?',
+                icon: 'question',
+                showCancelButton: true,
+                showDenyButton: true,
+                confirmButtonText: '<i class="fa-solid fa-floppy-disk"></i> Guardar y entrar al Estudio',
+                denyButtonText: 'Entrar sin guardar',
+                cancelButtonText: 'Cancelar',
+                confirmButtonColor: '#ff9800'
+            });
+
+            if (result.isConfirmed) {
+                try {
+                    Swal.fire({
+                        title: 'Guardando...',
+                        text: 'Preparando el Estudio en Directo...',
+                        allowOutsideClick: false,
+                        didOpen: () => {
+                            Swal.showLoading();
+                        }
+                    });
+                    const savedId = await saveCurrentProgram();
+                    hasUnsavedChanges = false;
+                    window.location.href = 'studio.html?id=' + savedId;
+                } catch (e) {
+                    Swal.fire('Error', 'Error al guardar el programa: ' + e.message, 'error');
+                }
+                return;
+            } else if (result.isDenied) {
+                hasUnsavedChanges = false;
+                window.location.href = 'studio.html?id=' + currentProgram.id;
+                return;
+            } else {
+                return; // Cancelar
+            }
+        }
+
+        // 3. Ya está guardado y sin cambios pendientes
         window.location.href = 'studio.html?id=' + currentProgram.id;
     });
 
@@ -373,7 +474,7 @@ window.renderCollaborators = async function() {
 window.changeCollaboratorRole = async function(uid, newRole) {
     currentProgram.collaborators[uid] = newRole;
     try {
-        await dbService.saveProgram(currentProgram.toFirestore());
+        await saveCurrentProgram();
         window.renderCollaborators();
     } catch(e) {
         Swal.fire("Error", e.message, "error");
@@ -383,7 +484,7 @@ window.changeCollaboratorRole = async function(uid, newRole) {
 window.removeCollaborator = async function(uid) {
     delete currentProgram.collaborators[uid];
     try {
-        await dbService.saveProgram(currentProgram.toFirestore());
+        await saveCurrentProgram();
         window.renderCollaborators();
     } catch(e) {
         Swal.fire("Error", e.message, "error");
@@ -413,7 +514,7 @@ if (btnConfirmShare) {
             if (!currentProgram.collaborators) currentProgram.collaborators = {};
             currentProgram.collaborators[collaborator.uid] = role;
             try {
-                await dbService.saveProgram(currentProgram.toFirestore());
+                await saveCurrentProgram();
                 document.getElementById('shareEmail').value = "";
                 window.renderCollaborators();
             } catch (e) {
