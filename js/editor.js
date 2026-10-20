@@ -410,48 +410,90 @@ async function initEditor(user) {
     });
 
     // Subir a Firebase Storage
-    document.getElementById('btnUploadDrive').addEventListener('click', async () => {
+    document.getElementById('btnUploadDrive').addEventListener('click', () => {
         const fileInput = document.createElement('input');
         fileInput.type = 'file';
         fileInput.accept = 'audio/*';
         fileInput.onchange = async (e) => {
-            if (e.target.files.length > 0) {
-                const file = e.target.files[0];
-                const btn = document.getElementById('btnUploadDrive');
-                try {
-                    btn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> Subiendo...';
-                    
-                    // Usamos Firebase Storage en lugar de Drive
-                    // Ask for category before uploading
-                    const catResult = await Swal.fire({
-                        title: 'Categoría del audio',
-                        html: '<p style="margin-bottom:15px;">¿En qué canal del mezclador irá este audio?</p>',
-                        input: 'select',
-                        inputOptions: {
-                            'sintonia': '🎙️ Sintonía (cabecera / cierre)',
-                            'efectos': '⚡ Efecto de sonido',
-                            'musica': '🎵 Música de fondo',
-                        },
-                        inputValue: 'efectos',
-                        showCancelButton: true,
-                        confirmButtonText: 'Subir',
-                        confirmButtonColor: '#f06292'
-                    });
-                    if (!catResult.isConfirmed) {
-                        btn.innerHTML = '<i class="fa-solid fa-cloud-arrow-up"></i> Subir';
-                        return;
+            if (!e.target.files.length) return;
+            const file = e.target.files[0];
+            const btn = document.getElementById('btnUploadDrive');
+            try {
+                // 1. Preguntar categoría antes de empezar la subida
+                const catResult = await Swal.fire({
+                    title: 'Categoría del audio',
+                    html: '<p style="margin-bottom:15px;">¿En qué canal del mezclador irá este audio?</p>',
+                    input: 'select',
+                    inputOptions: {
+                        'sintonia': '🎙️ Sintonía (cabecera / cierre)',
+                        'efectos': '⚡ Efecto de sonido',
+                        'musica': '🎵 Música de fondo',
+                    },
+                    inputValue: 'efectos',
+                    showCancelButton: true,
+                    confirmButtonText: 'Subir',
+                    confirmButtonColor: '#f06292'
+                });
+
+                if (!catResult.isConfirmed) return;
+                const chosenCategory = catResult.value;
+
+                // 2. Mostrar modal interactivo con barra de progreso
+                Swal.fire({
+                    title: 'Subiendo audio...',
+                    html: `
+                        <div style="margin: 15px 0; text-align: left;">
+                            <div style="display:flex; justify-content:space-between; font-size:13px; margin-bottom:8px; color:#444;">
+                                <span style="font-weight:bold; overflow:hidden; text-overflow:ellipsis; max-width:240px; white-space:nowrap;">${file.name}</span>
+                                <span id="uploadPercent" style="font-weight:bold; color:#f06292;">0%</span>
+                            </div>
+                            <div style="background:#e0e0e0; border-radius:10px; height:12px; overflow:hidden; width:100%;">
+                                <div id="uploadProgressBar" style="width:0%; height:100%; background:linear-gradient(90deg, #f06292, #00acc1); border-radius:10px; transition:width 0.2s ease;"></div>
+                            </div>
+                            <p id="uploadStatusText" style="font-size:12px; color:#777; margin-top:10px; text-align:center;">
+                                <i class="fa-solid fa-cloud-arrow-up"></i> Transfiriendo archivo a la nube...
+                            </p>
+                        </div>
+                    `,
+                    allowOutsideClick: false,
+                    allowEscapeKey: false,
+                    showConfirmButton: false
+                });
+
+                btn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> Subiendo...';
+
+                // 3. Subir a Cloudinary con progreso en tiempo real
+                const result = await cloudinaryService.uploadAudio(file, (percent) => {
+                    const bar = document.getElementById('uploadProgressBar');
+                    const text = document.getElementById('uploadPercent');
+                    const status = document.getElementById('uploadStatusText');
+                    if (bar) bar.style.width = percent + '%';
+                    if (text) text.innerText = percent + '%';
+                    if (percent >= 100 && status) {
+                        status.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> Procesando audio y calculando duración...';
                     }
-                    const chosenCategory = catResult.value;
-                    const result = await cloudinaryService.uploadAudio(file);
-                    
-                    window.addAudioWithTimeCalculation(file.name, result.url, chosenCategory);
-                    
-                    btn.innerHTML = '<i class="fa-solid fa-cloud-arrow-up"></i> Subir';
-                } catch (err) {
-                    console.error(err);
-                    Swal.fire("Error", "Asegúrate de que Firebase Storage está habilitado en tu consola de Firebase.\n" + err.message, "error");
-                    btn.innerHTML = '<i class="fa-solid fa-cloud-arrow-up"></i> Subir';
-                }
+                });
+
+                // 4. Esperar a calcular duración y añadir el bloque
+                const status = document.getElementById('uploadStatusText');
+                if (status) status.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> Añadiendo a la escaleta...';
+
+                await window.addAudioWithTimeCalculation(file.name, result.url, chosenCategory);
+
+                // 5. Confirmación final una vez visible en la escaleta
+                Swal.fire({
+                    icon: 'success',
+                    title: '¡Audio añadido!',
+                    text: `"${file.name}" se ha añadido correctamente a la escaleta.`,
+                    timer: 1800,
+                    showConfirmButton: false
+                });
+
+            } catch (err) {
+                console.error(err);
+                Swal.fire("Error al subir", err.message || "Error desconocido al subir el archivo.", "error");
+            } finally {
+                btn.innerHTML = '<i class="fa-solid fa-cloud-arrow-up"></i> Subir';
             }
         };
         fileInput.click();
@@ -666,32 +708,40 @@ window.addIntegratedAudio = function(title, url, category) {
 }
 
 window.addAudioWithTimeCalculation = function(title, rawUrl, category) {
-    const url = (rawUrl || '').replace('res.cloudinary.com', 'res-1.cloudinary.com');
-    import('./utils/timeUtils.js').then(module => {
-        const audio = new Audio(url);
-        audio.onloadedmetadata = function() {
-            const durSec = audio.duration;
-            let maxEnd = 0;
-            currentProgram.blocks.forEach(b => {
-                const e = module.timeToSeconds(b.endTime);
-                if (e > maxEnd) maxEnd = e;
-            });
-            
-            const startSec = maxEnd;
-            const endSec = Math.floor(startSec + durSec);
-            
-            escaletaUI.addBlock('audio', {
-                title: title,
-                audioUrl: url,
-                category: category,
-                startTime: module.secondsToTime(startSec),
-                endTime: module.secondsToTime(endSec),
-                maxDuration: durSec
-            });
-        };
-        
-        audio.onerror = function() {
-            escaletaUI.addBlock('audio', { title: title, audioUrl: url, category: category });
-        };
+    return new Promise((resolve) => {
+        const url = (rawUrl || '').replace('res.cloudinary.com', 'res-1.cloudinary.com');
+        import('./utils/timeUtils.js').then(module => {
+            const audio = new Audio(url);
+            let settled = false;
+
+            const addAndResolve = (durSec = 0) => {
+                if (settled) return;
+                settled = true;
+
+                let maxEnd = 0;
+                currentProgram.blocks.forEach(b => {
+                    const e = module.timeToSeconds(b.endTime);
+                    if (e > maxEnd) maxEnd = e;
+                });
+                
+                const startSec = maxEnd;
+                const endSec = durSec > 0 ? Math.floor(startSec + durSec) : startSec;
+                
+                escaletaUI.addBlock('audio', {
+                    title: title,
+                    audioUrl: url,
+                    category: category,
+                    startTime: module.secondsToTime(startSec),
+                    endTime: module.secondsToTime(endSec),
+                    maxDuration: durSec
+                });
+
+                resolve();
+            };
+
+            audio.onloadedmetadata = () => addAndResolve(audio.duration || 0);
+            audio.onerror = () => addAndResolve(0);
+            setTimeout(() => addAndResolve(0), 4000);
+        });
     });
 };

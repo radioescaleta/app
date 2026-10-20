@@ -436,9 +436,11 @@ async function handleFiles(files) {
     uploadStatus.style.display = 'block';
     let uploaded = 0;
     for (const file of files) {
-        uploadStatus.textContent = `Subiendo ${file.name} (${uploaded+1}/${files.length})...`;
+        uploadStatus.textContent = `Subiendo ${file.name} (${uploaded+1}/${files.length})... 0%`;
         try {
-            const uploadResult = await cloudinaryService.uploadAudio(file);
+            const uploadResult = await cloudinaryService.uploadAudio(file, (percent) => {
+                uploadStatus.textContent = `Subiendo ${file.name} (${uploaded+1}/${files.length})... ${percent}%`;
+            });
             const url = uploadResult.url;
             const title = file.name.replace(/\.[^.]+$/, '').replace(/[-_]/g,' ');
             const iconMap = { efectos: 'fa-burst', sintonias: 'fa-music', musica: 'fa-headphones' };
