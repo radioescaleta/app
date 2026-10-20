@@ -100,10 +100,25 @@ async function initEditor(user) {
     // 2. Inicializar Componentes
     const ganttUI = new GanttUI('ganttContainer');
     
+    let autoSaveTimer = null;
+    const triggerAutoSave = () => {
+        if (!isInitialized || isReadOnly) return;
+        hasUnsavedChanges = true;
+        clearTimeout(autoSaveTimer);
+        autoSaveTimer = setTimeout(async () => {
+            try {
+                await saveCurrentProgram();
+                console.log("Programa autoguardado con éxito.");
+            } catch (e) {
+                console.warn("Auto-save falló:", e);
+            }
+        }, 1500);
+    };
+
     // Callback cuando la escaleta cambia para actualizar la botonera y el gantt (si está activo)
     const onEscaletaUpdate = () => {
         if (isInitialized) {
-            hasUnsavedChanges = true;
+            triggerAutoSave();
         }
         if (document.body.classList.contains('gantt-active')) {
             ganttUI.render(currentProgram);
@@ -200,7 +215,7 @@ async function initEditor(user) {
     titleInput.addEventListener('input', (e) => {
         currentProgram.title = e.target.value;
         if (isInitialized) {
-            hasUnsavedChanges = true;
+            triggerAutoSave();
         }
     });
     titleInput.addEventListener('keypress', (e) => {
@@ -208,6 +223,24 @@ async function initEditor(user) {
             titleInput.blur();
         }
     });
+
+    // Guardar automáticamente al hacer clic en el enlace de volver a Dashboard
+    const backLink = document.querySelector('.logo a');
+    if (backLink) {
+        backLink.addEventListener('click', async (e) => {
+            if (hasUnsavedChanges && !isReadOnly) {
+                e.preventDefault();
+                const targetUrl = backLink.href;
+                clearTimeout(autoSaveTimer);
+                try {
+                    await saveCurrentProgram();
+                } catch(err) {
+                    console.error("Error guardando al salir:", err);
+                }
+                window.location.href = targetUrl;
+            }
+        });
+    }
 
     // Toast helper
     function showToast(message) {
@@ -222,11 +255,23 @@ async function initEditor(user) {
         });
     }
 
-    document.getElementById('btnSave').addEventListener('click', async () => {
+    const btnSave = document.getElementById('btnSave');
+    btnSave.addEventListener('click', async () => {
+        clearTimeout(autoSaveTimer);
+        const originalText = btnSave.innerHTML;
         try {
+            btnSave.disabled = true;
+            btnSave.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> Guardando...';
             await saveCurrentProgram();
+            btnSave.innerHTML = '<i class="fa-solid fa-check"></i> Guardado';
+            setTimeout(() => {
+                btnSave.disabled = false;
+                btnSave.innerHTML = originalText;
+            }, 2000);
             showToast("Programa guardado correctamente");
         } catch (e) {
+            btnSave.disabled = false;
+            btnSave.innerHTML = originalText;
             showToast("Error al guardar: " + e.message);
         }
     });
@@ -579,8 +624,9 @@ function openLibraryModal(category, onSelect) {
             btnPlay.onclick = (e) => {
                 e.stopPropagation();
                 if (previewAudio) { previewAudio.pause(); previewAudio = null; btnPlay.innerHTML = '<i class="fa-solid fa-play"></i>'; return; }
-                previewAudio = new Audio(item.url);
-                previewAudio.play();
+                const playUrl = (item.url || '').replace('res.cloudinary.com', 'res-1.cloudinary.com');
+                previewAudio = new Audio(playUrl);
+                previewAudio.play().catch(err => console.error("Error pre-escucha", err));
                 btnPlay.innerHTML = '<i class="fa-solid fa-stop"></i>';
                 previewAudio.onended = () => { btnPlay.innerHTML = '<i class="fa-solid fa-play"></i>'; previewAudio = null; };
             };
@@ -591,7 +637,8 @@ function openLibraryModal(category, onSelect) {
             btn.innerText = 'Usar';
             btn.onclick = () => {
                 if (previewAudio) previewAudio.pause();
-                onSelect({ category, title: item.title, url: item.url });
+                const soundUrl = (item.url || '').replace('res.cloudinary.com', 'res-1.cloudinary.com');
+                onSelect({ category, title: item.title, url: soundUrl });
                 modal.style.display = 'none';
             };
             
@@ -618,7 +665,8 @@ window.addIntegratedAudio = function(title, url, category) {
     }
 }
 
-window.addAudioWithTimeCalculation = function(title, url, category) {
+window.addAudioWithTimeCalculation = function(title, rawUrl, category) {
+    const url = (rawUrl || '').replace('res.cloudinary.com', 'res-1.cloudinary.com');
     import('./utils/timeUtils.js').then(module => {
         const audio = new Audio(url);
         audio.onloadedmetadata = function() {

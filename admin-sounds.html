@@ -317,8 +317,9 @@ function renderGrid() {
     grid.querySelectorAll('.btn-play').forEach(b =>
         b.addEventListener('click', () => {
             if (currentAudio) currentAudio.pause();
-            currentAudio = new Audio(b.dataset.url);
-            currentAudio.play();
+            const playUrl = (b.dataset.url || '').replace('res.cloudinary.com', 'res-1.cloudinary.com');
+            currentAudio = new Audio(playUrl);
+            currentAudio.play().catch(e => console.error("Error reproduciendo", e));
         })
     );
     grid.querySelectorAll('.btn-edit').forEach(b =>

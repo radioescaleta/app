@@ -234,18 +234,19 @@ export class AudioBoard {
     }
 
     toggleAudio(block, btnElement) {
-        const url = block.audioUrl;
+        let url = block.audioUrl;
         if (!url) return;
+        if (url.includes('res.cloudinary.com')) {
+            url = url.replace('res.cloudinary.com', 'res-1.cloudinary.com');
+            block.audioUrl = url;
+        }
 
         let player = this.players[url];
 
         if (player && !player.paused) {
             player.pause();
             player.currentTime = 0;
-            btnElement.style.boxShadow = '';
-            btnElement.style.transform = '';
-            const i = btnElement.querySelector('i');
-            if (i && btnElement.dataset.iconClass) i.className = 'fa-solid ' + btnElement.dataset.iconClass;
+            this.resetPlayingUI(btnElement);
             return;
         }
 
@@ -257,8 +258,31 @@ export class AudioBoard {
         const catVol = this.channelVolumes[block.category] || 0.8;
         player.volume = catVol * this._masterVol;
         player.currentTime = 0;
-        player.play().catch(e => console.error(e));
-        this.setPlayingUI(btnElement, player);
+        player.play().then(() => {
+            this.setPlayingUI(btnElement, player);
+        }).catch(e => {
+            console.error("Error reproduciendo audio:", e);
+            this.resetPlayingUI(btnElement);
+            if (window.Swal) {
+                Swal.fire({
+                    icon: 'warning',
+                    title: 'No se pudo reproducir',
+                    text: 'El audio no pudo cargarse desde el servidor. Comprueba la conexión o permisos de red.',
+                    toast: true,
+                    position: 'top-end',
+                    showConfirmButton: false,
+                    timer: 3500
+                });
+            }
+        });
+    }
+
+    resetPlayingUI(btnElement) {
+        if (!btnElement) return;
+        btnElement.style.boxShadow = '';
+        btnElement.style.transform = '';
+        const i = btnElement.querySelector('i');
+        if (i && btnElement.dataset.iconClass) i.className = 'fa-solid ' + btnElement.dataset.iconClass;
     }
 
     setPlayingUI(btnElement, player) {

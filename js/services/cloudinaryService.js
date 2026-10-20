@@ -22,10 +22,18 @@ class CloudinaryService {
 
         const data = await response.json();
 
+        // En redes corporativas educativas (ej. Andared en la Junta de Andalucía),
+        // res.cloudinary.com suele estar bloqueado o provocar avisos SSL,
+        // mientras que res-1.cloudinary.com resuelve sin bloqueos.
+        let secureUrl = data.secure_url || '';
+        if (secureUrl.includes('res.cloudinary.com')) {
+            secureUrl = secureUrl.replace('res.cloudinary.com', 'res-1.cloudinary.com');
+        }
+
         return {
             id: data.public_id,
             name: file.name,
-            url: data.secure_url
+            url: secureUrl
         };
     }
 }

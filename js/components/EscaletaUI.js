@@ -1,6 +1,5 @@
-// js/components/EscaletaUI.js
 import { TextBlock, AudioBlock } from "../models/Block.js";
-import { formatTime } from "../utils/timeUtils.js";
+import { formatTime, timeToSeconds, secondsToTime } from "../utils/timeUtils.js";
 
 export class EscaletaUI {
     constructor(containerId, program, onUpdateCallback) {
@@ -66,22 +65,20 @@ export class EscaletaUI {
     }
 
     highlightLiveBlocks(currentSeconds) {
-        import('../utils/timeUtils.js').then(module => {
-            Array.from(this.container.children).forEach(el => {
-                const blockId = el.dataset.id;
-                const block = this.program.blocks.find(b => b.id === blockId);
-                if (block) {
-                    const startSec = module.timeToSeconds(block.startTime);
-                    const endSec = module.timeToSeconds(block.endTime || block.duration || block.startTime);
-                    
-                    // Si currentSeconds está dentro del rango
-                    if (currentSeconds >= startSec && currentSeconds < endSec) {
-                        el.classList.add('live-active');
-                    } else {
-                        el.classList.remove('live-active');
-                    }
+        Array.from(this.container.children).forEach(el => {
+            const blockId = el.dataset.id;
+            const block = this.program.blocks.find(b => b.id === blockId);
+            if (block) {
+                const startSec = timeToSeconds(block.startTime);
+                const endSec = timeToSeconds(block.endTime || block.duration || block.startTime);
+                
+                // Si currentSeconds está dentro del rango
+                if (currentSeconds >= startSec && currentSeconds < endSec) {
+                    el.classList.add('live-active');
+                } else {
+                    el.classList.remove('live-active');
                 }
-            });
+            }
         });
     }
 
@@ -131,61 +128,67 @@ export class EscaletaUI {
             durationSpan.style.width = '35px';
 
             const updateDurationDisplay = () => {
-                import('../utils/timeUtils.js').then(module => {
-                    const s = module.timeToSeconds(block.startTime);
-                    const e = module.timeToSeconds(block.endTime);
-                    let d = e - s;
-                    if (d < 0) d = 0;
-                    durationSpan.innerText = `(${module.secondsToTime(d)})`;
-                });
+                const s = timeToSeconds(block.startTime);
+                const e = timeToSeconds(block.endTime);
+                let d = e - s;
+                if (d < 0) d = 0;
+                durationSpan.innerText = `(${secondsToTime(d)})`;
             };
             updateDurationDisplay();
 
-            startInput.addEventListener('blur', (e) => { 
-                import('../utils/timeUtils.js').then(module => {
-                    const valid = module.formatTime(e.target.value);
-                    if (valid) {
-                        e.target.value = valid;
-                        block.startTime = valid;
-                        e.target.style.borderColor = 'rgba(0,0,0,0.2)';
-                    } else {
-                        e.target.value = block.startTime; 
-                        e.target.style.borderColor = 'red';
-                    }
-                    updateDurationDisplay();
-                    this.notifyUpdate(); 
-                });
+            const applyStartTime = (rawVal) => {
+                const valid = formatTime(rawVal);
+                if (valid) {
+                    startInput.value = valid;
+                    block.startTime = valid;
+                    startInput.style.borderColor = 'rgba(0,0,0,0.2)';
+                } else {
+                    startInput.value = block.startTime; 
+                    startInput.style.borderColor = 'red';
+                }
+                updateDurationDisplay();
+                this.notifyUpdate();
+            };
+
+            startInput.addEventListener('change', (e) => applyStartTime(e.target.value));
+            startInput.addEventListener('blur', (e) => applyStartTime(e.target.value));
+            startInput.addEventListener('keydown', (e) => {
+                if (e.key === 'Enter') startInput.blur();
             });
 
-            endInput.addEventListener('blur', (e) => { 
-                import('../utils/timeUtils.js').then(module => {
-                    const valid = module.formatTime(e.target.value);
-                    if (valid) {
-                        const newEndSec = module.timeToSeconds(valid);
-                        const startSec = module.timeToSeconds(block.startTime);
-                        const requestedDuration = newEndSec - startSec;
+            const applyEndTime = (rawVal) => {
+                const valid = formatTime(rawVal);
+                if (valid) {
+                    const newEndSec = timeToSeconds(valid);
+                    const startSec = timeToSeconds(block.startTime);
+                    const requestedDuration = newEndSec - startSec;
 
-                        if (block.type === 'audio' && block.maxDuration && requestedDuration > block.maxDuration) {
-                            Swal.fire({toast: true, position: "bottom", icon: "warning", title: `Audio acortado: el archivo físico solo dura ${module.secondsToTime(block.maxDuration)}.`, showConfirmButton: false, timer: 4000});
-                            block.endTime = module.secondsToTime(startSec + block.maxDuration);
-                            e.target.value = block.endTime;
-                            e.target.style.borderColor = 'orange';
-                        } else if (newEndSec < startSec) {
-                            block.endTime = block.startTime; // No puede ser negativo
-                            e.target.value = block.endTime;
-                            e.target.style.borderColor = 'orange';
-                        } else {
-                            e.target.value = valid;
-                            block.endTime = valid;
-                            e.target.style.borderColor = 'rgba(0,0,0,0.2)';
-                        }
+                    if (block.type === 'audio' && block.maxDuration && requestedDuration > block.maxDuration) {
+                        Swal.fire({toast: true, position: "bottom", icon: "warning", title: `Audio acortado: el archivo físico solo dura ${secondsToTime(block.maxDuration)}.`, showConfirmButton: false, timer: 4000});
+                        block.endTime = secondsToTime(startSec + block.maxDuration);
+                        endInput.value = block.endTime;
+                        endInput.style.borderColor = 'orange';
+                    } else if (newEndSec < startSec) {
+                        block.endTime = block.startTime; // No puede ser negativo
+                        endInput.value = block.endTime;
+                        endInput.style.borderColor = 'orange';
                     } else {
-                        e.target.value = block.endTime; 
-                        e.target.style.borderColor = 'red';
+                        endInput.value = valid;
+                        block.endTime = valid;
+                        endInput.style.borderColor = 'rgba(0,0,0,0.2)';
                     }
-                    updateDurationDisplay();
-                    this.notifyUpdate(); 
-                });
+                } else {
+                    endInput.value = block.endTime; 
+                    endInput.style.borderColor = 'red';
+                }
+                updateDurationDisplay();
+                this.notifyUpdate();
+            };
+
+            endInput.addEventListener('change', (e) => applyEndTime(e.target.value));
+            endInput.addEventListener('blur', (e) => applyEndTime(e.target.value));
+            endInput.addEventListener('keydown', (e) => {
+                if (e.key === 'Enter') endInput.blur();
             });
 
             timeContainer.appendChild(startInput);
@@ -200,7 +203,7 @@ export class EscaletaUI {
             contentContainer.style.minWidth = '0';
             contentContainer.style.overflow = 'hidden';
 
-                        let prefix = "";
+            let prefix = "";
             if (block.type === 'audio') {
                 const audioIndex = this.program.blocks.filter(b => b.type === 'audio').findIndex(b => b.id === block.id);
                 if (audioIndex >= 0 && audioIndex < 9) {
@@ -219,26 +222,16 @@ export class EscaletaUI {
                 helper.style.fontSize = '11px';
                 helper.style.marginTop = '4px';
                 
-                const updateViewAndTime = () => {
+                const updateView = () => {
                     const txt = block.content || '✏️ Haz clic aquí para escribir el guión...';
                     textPreview.innerText = txt;
                     
                     const words = (block.content || "").trim().split(/\s+/).filter(w => w.length > 0).length;
                     const sec = Math.round((words / 130) * 60);
-                    
-                    import('../utils/timeUtils.js').then(module => {
-                        helper.innerText = `Lectura est.: ${module.secondsToTime(sec)} (${words} palabras)`;
-                        const newEnd = module.secondsToTime(module.timeToSeconds(block.startTime) + sec);
-                        
-                        if (block.endTime !== newEnd && document.activeElement !== endInput) {
-                            block.endTime = newEnd;
-                            endInput.value = newEnd;
-                            updateDurationDisplay();
-                        }
-                    });
+                    helper.innerText = `Lectura est.: ${secondsToTime(sec)} (${words} palabras)`;
                 };
                 
-                updateViewAndTime();
+                updateView();
 
                 textPreview.addEventListener('mouseover', () => {
                     if (!document.body.classList.contains('live-mode') && !document.title.includes('👁️')) {
@@ -271,7 +264,20 @@ export class EscaletaUI {
                     }).then((result) => {
                         if (result.isConfirmed) {
                             block.content = result.value;
-                            updateViewAndTime();
+
+                            // Solo si el bloque aún no tiene tiempo fin configurado a mano (era 00:00 o igual al inicio),
+                            // calculamos automáticamente el fin según la estimación de lectura.
+                            const words = (block.content || "").trim().split(/\s+/).filter(w => w.length > 0).length;
+                            const sec = Math.round((words / 130) * 60);
+                            const hasNoCustomDuration = !block.endTime || block.endTime === "00:00" || block.endTime === block.startTime;
+                            if (hasNoCustomDuration && sec > 0) {
+                                const newEnd = secondsToTime(timeToSeconds(block.startTime) + sec);
+                                block.endTime = newEnd;
+                                endInput.value = newEnd;
+                                updateDurationDisplay();
+                            }
+
+                            updateView();
                             this.notifyUpdate();
                         }
                     });
@@ -430,11 +436,16 @@ export class EscaletaUI {
 
                     // Reproducir el nuevo
                     if (globalPlayer) {
-                        globalPlayer.src = block.audioUrl;
+                        const playUrl = (block.audioUrl || '').replace('res.cloudinary.com', 'res-1.cloudinary.com');
+                        globalPlayer.src = playUrl;
                         globalPlayer.dataset.currentBlock = block.id;
-                        globalPlayer.play().catch(e => console.error("Error reproduciendo", e));
-                        
-                        btnAudioPreview.innerHTML = '<i class="fa-solid fa-stop"></i>';
+                        globalPlayer.play().then(() => {
+                            btnAudioPreview.innerHTML = '<i class="fa-solid fa-stop"></i>';
+                        }).catch(e => {
+                            console.error("Error reproduciendo", e);
+                            btnAudioPreview.innerHTML = '<i class="fa-solid fa-play"></i>';
+                            globalPlayer.dataset.currentBlock = '';
+                        });
                         
                         globalPlayer.onended = () => {
                             btnAudioPreview.innerHTML = '<i class="fa-solid fa-play"></i>';

@@ -303,7 +303,13 @@ class DbService {
         if (!db) return [];
         try {
             const snap = await getDocs(collection(db, "sounds"));
-            return snap.docs.map(d => ({ docId: d.id, ...d.data() }));
+            return snap.docs.map(d => {
+                const data = d.data();
+                if (data.url && data.url.includes('res.cloudinary.com')) {
+                    data.url = data.url.replace('res.cloudinary.com', 'res-1.cloudinary.com');
+                }
+                return { docId: d.id, ...data };
+            });
         } catch (e) {
             console.error("Error obteniendo librería de sonidos:", e);
             return [];

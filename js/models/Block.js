@@ -20,7 +20,7 @@ export class AudioBlock extends Block {
         super('audio', id);
         this.category = category; // 'sintonia', 'efecto', 'musica'
         this.title = title;
-        this.audioUrl = audioUrl;
+        this.audioUrl = audioUrl ? audioUrl.replace('res.cloudinary.com', 'res-1.cloudinary.com') : "";
         this.maxDuration = maxDuration;
         this.isBackground = false;
         this.keyboardKey = keyboardKey;
