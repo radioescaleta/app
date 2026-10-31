@@ -4,7 +4,7 @@ import { authService } from './services/authService.js?v=2';
 import { dbService } from './services/dbService.js?v=6';
 import { setupUserProfile } from './utils/profileUI.js?v=12';
 import { Program } from './models/Program.js';
-import { AudioBoard } from './components/AudioBoard.js?v=7';
+import { AudioBoard } from './components/AudioBoard.js?v=8';
 
 let currentProgram = new Program();
 let audioBoard = null;
@@ -139,6 +139,7 @@ window.openTextInAntena = function(block) {
         const voice = window.studioVoices.find(v => v.voiceURI === selectedVoiceURI);
         if (voice) utterance.voice = voice;
         block.voiceURI = selectedVoiceURI;
+        utterance.volume = Math.min(1.0, Math.max(0, (channelVolumes.voz || 1.0) * masterVol));
 
         utterance.onstart = () => {
             newBtnPlay.innerHTML = '<i class="fa-solid fa-stop"></i> Parar';
@@ -262,6 +263,9 @@ function initMixer() {
                     if (p && !p.paused) p.volume = v * masterVol;
                 });
             }
+            if (def.key === 'voz' && window.currentMicGainNode) {
+                window.currentMicGainNode.gain.value = v * masterVol;
+            }
         });
         mixerChannels.appendChild(ch);
     });
@@ -276,6 +280,9 @@ function initMixer() {
                     p.volume = (channelVolumes[block.category] || 0.8) * v;
                 }
             });
+        }
+        if (window.currentMicGainNode) {
+            window.currentMicGainNode.gain.value = (channelVolumes.voz || 1.0) * v;
         }
     }, true);
     mixerChannels.appendChild(masterCh);
@@ -447,75 +454,285 @@ function startRealTimer() {
 // ──────────────────────────────────────────────
 //  GRABACIÓN DE PODCAST
 // ──────────────────────────────────────────────
+function getSupportedMimeType() {
+    const types = [
+        'audio/webm;codecs=opus',
+        'audio/webm',
+        'audio/ogg;codecs=opus',
+        'audio/ogg'
+    ];
+    for (const t of types) {
+        if (typeof MediaRecorder !== 'undefined' && MediaRecorder.isTypeSupported && MediaRecorder.isTypeSupported(t)) {
+            return t;
+        }
+    }
+    return '';
+}
+
 function initRecording() {
     let mediaRecorder = null;
     let recordedChunks = [];
     let streamRef = null;
+    let micStreamRef = null;
 
     const btn = document.getElementById('btnRecordPodcast');
+    if (!btn) return;
+
+    const isFirefox = navigator.userAgent.toLowerCase().includes('firefox');
 
     btn.addEventListener('click', async () => {
         if (mediaRecorder && mediaRecorder.state === 'recording') {
             mediaRecorder.stop();
             btn.innerHTML = '<i class="fa-solid fa-circle-dot"></i> REC';
+            btn.classList.remove('recording');
             return;
         }
 
         try {
-            await Swal.fire({
-                title: '🎙️ Modo de Grabación',
-                html: `<p style="text-align:left;">Para capturar tanto las <b>sintonías</b> como las <b>voces</b>:</p>
-                    <ol style="text-align:left;">
-                        <li>En la ventana que aparecerá, selecciona la pestaña <b>"Toda la pantalla"</b>.</li>
-                        <li>Haz clic en la imagen de tu pantalla.</li>
-                        <li>Marca abajo el interruptor <b>"Compartir audio del sistema"</b>.</li>
-                    </ol>`,
-                icon: 'warning',
-                confirmButtonText: 'Entendido, ¡a grabar!'
-            });
+            let finalAudioStream = null;
+            const mimeType = getSupportedMimeType();
 
-            const stream = await navigator.mediaDevices.getDisplayMedia({
-                video: { displaySurface: 'browser' },
-                audio: { echoCancellation: false, noiseSuppression: false, sampleRate: 44100 }
-            });
+            if (isFirefox) {
+                // Modo Firefox: Web Audio API (Botonera) + Micrófono
+                const swalRes = await Swal.fire({
+                    title: '🎙️ Grabación en Directo',
+                    html: `
+                        <div style="text-align:left; font-size: 14px; line-height: 1.5;">
+                            <p>Firefox no admite captura de audio de pestañas directamente. Grabaremos utilizando la <b>mesa de mezcla del estudio</b> combinada con tu <b>micrófono</b>:</p>
+                            <ul style="margin: 10px 0 15px 20px; padding: 0;">
+                                <li>🔊 <b>Botonera de sonidos:</b> Sintonías, efectos y música se capturan en alta fidelidad.</li>
+                                <li>🎙️ <b>Micrófono:</b> Para capturar tu voz en directo.</li>
+                            </ul>
+                            <div style="background: #f8f9fa; border: 1px solid #e9ecef; border-radius: 8px; padding: 10px 14px; margin-top: 10px;">
+                                <label style="display:flex; align-items:center; gap:10px; cursor:pointer; font-weight: 600; color: #333;">
+                                    <input type="checkbox" id="swalFirefoxMic" checked style="width: 18px; height: 18px; accent-color: #f06292;">
+                                    Activar mi micrófono para hablar
+                                </label>
+                            </div>
+                        </div>
+                    `,
+                    icon: 'info',
+                    showCancelButton: true,
+                    confirmButtonText: '¡Comenzar grabación!',
+                    cancelButtonText: 'Cancelar',
+                    confirmButtonColor: '#d32f2f',
+                    preConfirm: () => {
+                        const cb = document.getElementById('swalFirefoxMic');
+                        return { useMic: cb ? cb.checked : true };
+                    }
+                });
 
-            const audioTracks = stream.getAudioTracks();
-            if (audioTracks.length === 0) {
-                stream.getTracks().forEach(t => t.stop());
-                Swal.fire('Sin audio', "No activaste 'Compartir audio del sistema'.", 'error');
-                return;
+                if (!swalRes.isConfirmed) return;
+
+                const useMic = swalRes.value.useMic;
+
+                // Inicializar Web Audio de la botonera
+                if (audioBoard) {
+                    audioBoard.getAudioContext();
+                    audioBoard.getRecordingStream();
+                }
+                const actx = audioBoard ? audioBoard.getAudioContext() : new (window.AudioContext || window.webkitAudioContext)();
+                let dest = audioBoard ? audioBoard.streamDestination : null;
+                if (!dest) {
+                    dest = actx.createMediaStreamDestination();
+                }
+
+                if (useMic) {
+                    try {
+                        micStreamRef = await navigator.mediaDevices.getUserMedia({
+                            audio: {
+                                echoCancellation: true,
+                                noiseSuppression: true,
+                                autoGainControl: true
+                            }
+                        });
+                        const micSource = actx.createMediaStreamSource(micStreamRef);
+                        const micGain = actx.createGain();
+                        micGain.gain.value = (channelVolumes.voz || 1.0) * masterVol;
+                        window.currentMicGainNode = micGain;
+                        micSource.connect(micGain);
+                        micGain.connect(dest);
+                    } catch (micErr) {
+                        console.warn("Permiso de micrófono no concedido o error:", micErr);
+                        Swal.fire({
+                            icon: 'warning',
+                            title: 'Micrófono no disponible',
+                            text: 'No se pudo acceder al micrófono. Se grabarán únicamente los sonidos de la botonera.',
+                            timer: 3500,
+                            toast: true,
+                            position: 'top-end',
+                            showConfirmButton: false
+                        });
+                    }
+                }
+
+                finalAudioStream = dest.stream;
+
+            } else {
+                // Modo Chromium / Chrome: getDisplayMedia con la pestaña actual
+                const swalRes = await Swal.fire({
+                    title: '🎙️ Grabación de Programa',
+                    html: `
+                        <div style="text-align:left; font-size: 14px; line-height: 1.5;">
+                            <p>Para capturar el audio de esta ventana/pestaña:</p>
+                            <ol style="margin: 8px 0 12px 20px; padding: 0;">
+                                <li>En el diálogo de Chrome, selecciona la pestaña <b>"Esta pestaña"</b> (o la pestaña del Estudio).</li>
+                                <li>Asegúrate de marcar abajo <b>"Compartir audio de la pestaña"</b>.</li>
+                                <li>Haz clic en <b>"Compartir"</b>.</li>
+                            </ol>
+                            <div style="background: #f8f9fa; border: 1px solid #e9ecef; border-radius: 8px; padding: 10px 14px; margin-top: 10px;">
+                                <label style="display:flex; align-items:center; gap:10px; cursor:pointer; font-weight: 600; color: #333;">
+                                    <input type="checkbox" id="swalChromeMic" style="width: 18px; height: 18px; accent-color: #f06292;">
+                                    Incluir también mi voz desde el micrófono
+                                </label>
+                            </div>
+                        </div>
+                    `,
+                    icon: 'info',
+                    showCancelButton: true,
+                    confirmButtonText: 'Entendido, ¡a grabar!',
+                    cancelButtonText: 'Cancelar',
+                    confirmButtonColor: '#d32f2f',
+                    preConfirm: () => {
+                        const cb = document.getElementById('swalChromeMic');
+                        return { useMic: cb ? cb.checked : false };
+                    }
+                });
+
+                if (!swalRes.isConfirmed) return;
+
+                const useMic = swalRes.value.useMic;
+
+                // Capturar pestaña actual
+                const displayMediaOptions = {
+                    video: { displaySurface: 'browser' },
+                    audio: {
+                        echoCancellation: false,
+                        noiseSuppression: false,
+                        autoGainControl: false,
+                        systemAudio: 'include'
+                    },
+                    preferCurrentTab: true,
+                    selfBrowserSurface: 'include',
+                    systemAudio: 'include'
+                };
+
+                const stream = await navigator.mediaDevices.getDisplayMedia(displayMediaOptions);
+                streamRef = stream;
+
+                const audioTracks = stream.getAudioTracks();
+                if (audioTracks.length === 0) {
+                    stream.getTracks().forEach(t => t.stop());
+                    streamRef = null;
+                    Swal.fire({
+                        title: 'Sin audio detectado',
+                        text: "No activaste la casilla 'Compartir audio de la pestaña'. Por favor, vuelve a pulsar REC y asegúrate de marcarla.",
+                        icon: 'warning'
+                    });
+                    return;
+                }
+
+                // Desactivar video track para no malgastar recursos
+                stream.getVideoTracks().forEach(t => { t.enabled = false; });
+
+                if (useMic) {
+                    try {
+                        micStreamRef = await navigator.mediaDevices.getUserMedia({
+                            audio: {
+                                echoCancellation: true,
+                                noiseSuppression: true,
+                                autoGainControl: true
+                            }
+                        });
+
+                        const actx = new (window.AudioContext || window.webkitAudioContext)();
+                        const dest = actx.createMediaStreamDestination();
+
+                        const tabSource = actx.createMediaStreamSource(new MediaStream(audioTracks));
+                        tabSource.connect(dest);
+
+                        const micSource = actx.createMediaStreamSource(micStreamRef);
+                        const micGain = actx.createGain();
+                        micGain.gain.value = (channelVolumes.voz || 1.0) * masterVol;
+                        window.currentMicGainNode = micGain;
+                        micSource.connect(micGain);
+                        micGain.connect(dest);
+
+                        finalAudioStream = dest.stream;
+                    } catch (micErr) {
+                        console.warn("No se pudo capturar el micrófono en Chrome, usando solo audio de pestaña:", micErr);
+                        finalAudioStream = new MediaStream(audioTracks);
+                    }
+                } else {
+                    finalAudioStream = new MediaStream(audioTracks);
+                }
+
+                // Si el usuario detiene el stream desde la barra nativa del navegador
+                audioTracks[0].onended = () => {
+                    if (mediaRecorder && mediaRecorder.state === 'recording') {
+                        mediaRecorder.stop();
+                        btn.innerHTML = '<i class="fa-solid fa-circle-dot"></i> REC';
+                        btn.classList.remove('recording');
+                    }
+                };
             }
 
-            const audioStream = new MediaStream(audioTracks);
-            streamRef = stream;
-
-            mediaRecorder = new MediaRecorder(audioStream, { mimeType: 'audio/webm' });
+            // Iniciar MediaRecorder
+            recordedChunks = [];
+            mediaRecorder = mimeType 
+                ? new MediaRecorder(finalAudioStream, { mimeType })
+                : new MediaRecorder(finalAudioStream);
 
             mediaRecorder.ondataavailable = e => {
                 if (e.data.size > 0) recordedChunks.push(e.data);
             };
 
             mediaRecorder.onstop = () => {
-                const blob = new Blob(recordedChunks, { type: 'audio/webm' });
+                const ext = mimeType.includes('ogg') ? '.ogg' : '.webm';
+                const type = mimeType || 'audio/webm';
+                const blob = new Blob(recordedChunks, { type });
                 const url = URL.createObjectURL(blob);
                 const a = document.createElement('a');
                 a.style.display = 'none';
                 a.href = url;
-                a.download = (currentProgram.title || 'Podcast') + '.webm';
+                a.download = (currentProgram.title || 'Podcast') + ext;
                 document.body.appendChild(a);
                 a.click();
                 setTimeout(() => { document.body.removeChild(a); URL.revokeObjectURL(url); }, 100);
                 recordedChunks = [];
-                if (streamRef) streamRef.getTracks().forEach(t => t.stop());
-                Swal.fire('¡Podcast guardado!', 'Se ha descargado el archivo .webm del podcast.', 'success');
+
+                if (streamRef) {
+                    streamRef.getTracks().forEach(t => t.stop());
+                    streamRef = null;
+                }
+                if (micStreamRef) {
+                    micStreamRef.getTracks().forEach(t => t.stop());
+                    micStreamRef = null;
+                }
+                window.currentMicGainNode = null;
+
+                Swal.fire('¡Podcast guardado!', `Se ha descargado el archivo ${ext} del programa.`, 'success');
             };
 
             mediaRecorder.start();
             btn.innerHTML = '<i class="fa-solid fa-stop"></i> STOP';
+            btn.classList.add('recording');
 
         } catch (err) {
             console.error(err);
-            Swal.fire('Grabación cancelada', 'No se pudo iniciar la captura de audio.', 'warning');
+            if (streamRef) {
+                streamRef.getTracks().forEach(t => t.stop());
+                streamRef = null;
+            }
+            if (micStreamRef) {
+                micStreamRef.getTracks().forEach(t => t.stop());
+                micStreamRef = null;
+            }
+            window.currentMicGainNode = null;
+
+            if (err && err.name !== 'NotAllowedError') {
+                Swal.fire('Grabación cancelada', 'No se pudo iniciar la captura de audio.', 'warning');
+            }
         }
     });
 }

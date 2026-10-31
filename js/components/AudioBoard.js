@@ -10,6 +10,9 @@ export class AudioBoard {
         // Per-category volumes
         this.channelVolumes = { sintonia: 0.8, efectos: 0.8, musica: 0.6, voz: 1.0 };
         this._masterVol = 1.0;
+        this.audioContext = null;
+        this.streamDestination = null;
+        this._connectedElements = new WeakSet();
         this.initKeyboardListeners();
     }
 
@@ -233,6 +236,42 @@ export class AudioBoard {
         });
     }
 
+    getAudioContext() {
+        if (!this.audioContext) {
+            const AudioCtx = window.AudioContext || window.webkitAudioContext;
+            if (AudioCtx) {
+                this.audioContext = new AudioCtx();
+                this.streamDestination = this.audioContext.createMediaStreamDestination();
+            }
+        }
+        if (this.audioContext && this.audioContext.state === 'suspended') {
+            this.audioContext.resume();
+        }
+        return this.audioContext;
+    }
+
+    getRecordingStream() {
+        this.getAudioContext();
+        if (this.audioContext && this.streamDestination) {
+            Object.values(this.players).forEach(p => this._connectPlayerToContext(p));
+            return this.streamDestination.stream;
+        }
+        return null;
+    }
+
+    _connectPlayerToContext(player) {
+        if (!this.audioContext || !this.streamDestination) return;
+        if (this._connectedElements.has(player)) return;
+        try {
+            const source = this.audioContext.createMediaElementSource(player);
+            source.connect(this.audioContext.destination);
+            source.connect(this.streamDestination);
+            this._connectedElements.add(player);
+        } catch (e) {
+            console.warn("AudioBoard: No se pudo conectar el reproductor a Web Audio:", e);
+        }
+    }
+
     toggleAudio(block, btnElement) {
         let url = block.audioUrl;
         if (!url) return;
@@ -251,8 +290,19 @@ export class AudioBoard {
         }
 
         if (!player) {
-            player = new Audio(url);
+            player = new Audio();
+            player.crossOrigin = 'anonymous';
+            player.src = url;
             this.players[url] = player;
+            if (this.audioContext && this.streamDestination) {
+                this._connectPlayerToContext(player);
+            }
+        } else if (this.audioContext && this.streamDestination) {
+            this._connectPlayerToContext(player);
+        }
+
+        if (this.audioContext && this.audioContext.state === 'suspended') {
+            this.audioContext.resume();
         }
 
         const catVol = this.channelVolumes[block.category] || 0.8;
